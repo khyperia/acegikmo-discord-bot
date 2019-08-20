@@ -71,9 +71,10 @@ namespace DiscordDeleteEcho
 
         static Config Config()
         {
-            using var stream = File.OpenRead("config.json");
-            var json = new DataContractJsonSerializer(typeof(Config));
-            return (Config)json.ReadObject(stream);
+            using (var stream = File.OpenRead("config.json")) {
+                var json = new DataContractJsonSerializer(typeof(Config));
+                return (Config)json.ReadObject(stream);
+            }
         }
 
         static async Task Main()
