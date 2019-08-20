@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +11,9 @@ using System.Collections.Immutable;
 
 namespace DiscordDeleteEcho
 {
+#pragma warning disable IDE1006 // Naming Styles
+#pragma warning disable CS8618 // Non-nullable field is uninitialized.
+#pragma warning disable CS0649
     [DataContract]
     internal class Config
     {
@@ -23,28 +26,97 @@ namespace DiscordDeleteEcho
         [DataMember]
         internal ulong channel;
     }
+#pragma warning restore CS0649
+#pragma warning restore CS8618 // Non-nullable field is uninitialized.
+#pragma warning restore IDE1006 // Naming Styles
 
-    class Program
+    struct Message
     {
-        readonly Dictionary<ulong, string> _messages = new Dictionary<ulong, string>();
+        public long Timestamp;
+        public string Text;
+
+        public Message(long timestamp, string text)
+        {
+            Timestamp = timestamp;
+            Text = text;
+        }
+
+        public string Write(ulong id)
+        {
+            var msg = Text
+                .Replace(@"\", @"\\")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n");
+            return $"{Timestamp} {id} {msg}";
+        }
+
+        public static Message Read(string text, out ulong id)
+        {
+            var arr = text.Split(new[] { ' ' }, 3);
+            var msg = arr[2]
+                .Replace("\\n", "\n")
+                .Replace("\\r", "\r")
+                .Replace(@"\\", @"\");
+            id = ulong.Parse(arr[1]);
+            return new Message(long.Parse(arr[0]), msg);
+        }
+    }
+
+    class Program: IDisposable
+    {
+        readonly Dictionary<ulong, Message> _messages = new Dictionary<ulong, Message>();
         readonly Config _config = Config();
-        DiscordSocketClient _client;
+        readonly DiscordSocketClient _client;
+        readonly StreamWriter _writer;
 
         static Config Config()
         {
-            using (var stream = File.OpenRead("config.json"))
-            {
-                var json = new DataContractJsonSerializer(typeof(Config));
-                return (Config)json.ReadObject(stream);
-            }
+            using var stream = File.OpenRead("config.json");
+            var json = new DataContractJsonSerializer(typeof(Config));
+            return (Config)json.ReadObject(stream);
         }
 
-        static Task Main() => new Program().Run();
+        static async Task Main()
+        {
+            var program = new Program();
+            await program.Run();
+            program.Dispose();
+        }
+
+        Program()
+        {
+            _client = new DiscordSocketClient();
+            try
+            {
+                var loaded = 0;
+                var trimmed = 0;
+                var thresh = DateTimeOffset.UtcNow.AddMonths(-1).UtcTicks;
+                foreach (var line in File.ReadLines("messages.txt"))
+                {
+                    var msg = Message.Read(line, out var id);
+                    if (msg.Timestamp > thresh)
+                    {
+                        loaded++;
+                        _messages[id] = msg;
+                    }
+                    else
+                    {
+                        trimmed++;
+                    }
+                }
+                Console.WriteLine($"Loaded {loaded} messages");
+                Console.WriteLine($"Trimmed {trimmed} messages over a month old");
+            }
+            catch (Exception e) {
+                Console.WriteLine("Error loading messages.txt:");
+                Console.WriteLine(e);
+            }
+            _writer = File.CreateText("messages.txt");
+            Console.CancelKeyPress += (sender, args) => Dispose();
+        }
 
         async Task Run()
         {
-            _client = new DiscordSocketClient();
-
             _client.Log += a => { Console.WriteLine(a); return Task.CompletedTask; };
             _client.MessageReceived += MessageReceivedAsync;
             _client.MessageUpdated += MessageUpdatedAsync;
@@ -63,7 +135,7 @@ namespace DiscordDeleteEcho
             if (_messages.TryGetValue(messageId.Id, out var message))
             {
                 var modchannel = (IMessageChannel)_client.GetChannel(_config.channel);
-                await modchannel.SendMessageAsync(message);
+                await modchannel.SendMessageAsync(message.Text);
             }
         }
 
@@ -75,7 +147,8 @@ namespace DiscordDeleteEcho
             {
                 var text = Format(message);
                 Console.WriteLine(text);
-                _messages[message.Id] = text;
+                var ticks = message.Timestamp.UtcTicks;
+                Append(message.Id, ticks, text);
             }
             return Task.CompletedTask;
         }
@@ -88,10 +161,19 @@ namespace DiscordDeleteEcho
                 {
                     var text = Format(message);
                     Console.WriteLine(text);
-                    _messages[message.Id] = text;
+                    var ticks = message.Timestamp.UtcTicks;
+                    Append(message.Id, ticks, text);
                 }
             }
             return Task.CompletedTask;
+        }
+
+        private void Append(ulong id, long ticks, string text)
+        {
+            var message = new Message(ticks, text);
+            _messages[id] = message;
+            _writer.WriteLine(message.Write(id));
+            _writer.Flush();
         }
 
         private string Format(SocketMessage message)
@@ -110,6 +192,12 @@ namespace DiscordDeleteEcho
                 }
             }
             return result;
+        }
+
+        public void Dispose()
+        {
+            _writer.Dispose();
+            _client.Dispose();
         }
     }
 }
