@@ -65,6 +65,7 @@ namespace DiscordDeleteEcho
     class Program: IDisposable
     {
         readonly Dictionary<ulong, Message> _messages = new Dictionary<ulong, Message>();
+        readonly Dictionary<ulong, string> _lastMessageLink = new Dictionary<ulong, string>();
         readonly Config _config = Config();
         readonly DiscordSocketClient _client;
         readonly StreamWriter _writer;
@@ -112,7 +113,7 @@ namespace DiscordDeleteEcho
                 Console.WriteLine("Error loading messages.txt:");
                 Console.WriteLine(e);
             }
-            _writer = File.CreateText("messages.txt");
+            _writer = File.AppendText("messages.txt");
             Console.CancelKeyPress += (sender, args) => Dispose();
         }
 
@@ -177,10 +178,24 @@ namespace DiscordDeleteEcho
             _writer.Flush();
         }
 
+        private string GetLastMessageLink(SocketMessage newMessage) {
+            var channel = newMessage.Channel;
+            string lastMessageLink;
+            if (!_lastMessageLink.TryGetValue(channel.Id, out lastMessageLink)) {
+                lastMessageLink = "";
+            }
+            if (channel is IGuildChannel ch) {
+                var newLink = $"https://discordapp.com/channels/{ch.Guild.Id}/{channel.Id}/{newMessage.Id}";
+                _lastMessageLink[channel.Id] = newLink;
+            }
+            return lastMessageLink;
+        }
+
         private string Format(SocketMessage message)
         {
             //var result = $"Message deleted in {MentionUtils.MentionChannel(message.Channel.Id)}: <{message.Author.Mention}> ";
-            var result = $"Message by {message.Author.Mention} deleted in {MentionUtils.MentionChannel(message.Channel.Id)}:\n";
+            var link = GetLastMessageLink(message);
+            var result = $"Message by {message.Author.Mention} deleted in {MentionUtils.MentionChannel(message.Channel.Id)} after {link}:\n";
             if (!string.IsNullOrWhiteSpace(message.Content))
             {
                 result += message.Content;
