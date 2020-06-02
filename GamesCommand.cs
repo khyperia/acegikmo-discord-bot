@@ -7,7 +7,7 @@ using System.Linq;
 using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 
-namespace DiscordDeleteEcho
+namespace AcegikmoDiscordBot
 {
     internal class GamesCommand
     {
@@ -96,7 +96,7 @@ namespace DiscordDeleteEcho
             }
             if (message.Content == "!games")
             {
-                await message.Channel.SendMessageAsync($"All pingable games: {string.Join(", ", _gameDict.Keys)}");
+                await message.Channel.SendMessageAsync($"All pingable games (and number of people): {string.Join(", ", _gameDict.Select(kvp => $"{kvp.Key} ({kvp.Value.Count})"))}");
             }
             if (message.Author.Id == 139525105846976512UL && message.Content.StartsWith("!nukegame "))
             {

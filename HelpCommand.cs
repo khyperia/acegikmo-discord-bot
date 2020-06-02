@@ -1,7 +1,7 @@
 using Discord.WebSocket;
 using System.Threading.Tasks;
 
-namespace DiscordDeleteEcho
+namespace AcegikmoDiscordBot
 {
     internal class HelpCommand
     {

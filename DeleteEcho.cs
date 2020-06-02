@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DiscordDeleteEcho
+namespace AcegikmoDiscordBot
 {
     internal class DeleteEcho : IDisposable
     {

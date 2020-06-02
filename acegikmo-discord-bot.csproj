@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>discord_delete_echo</RootNamespace>
+    <RootNamespace>AcegikmoDiscordBot</RootNamespace>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
