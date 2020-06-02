@@ -143,16 +143,20 @@ namespace DiscordDeleteEcho
 
         private bool IsValidChannel(ulong id) => _client.GetGuild(_config.server).Channels.Select(c => c.Id).Contains(id);
 
-        private Task MessageReceivedAsync(SocketMessage message)
+        private async Task MessageReceivedAsync(SocketMessage message)
         {
             if (IsValidChannel(message.Channel.Id))
             {
+                if (message.Author.Id == 139525105846976512UL && message.Content.StartsWith("!echo "))
+                {
+                    var msg = message.Content.Substring("!echo ".Length).Trim('`');
+                    await message.Channel.SendMessageAsync(msg);
+                }
                 var text = Format(message);
                 Console.WriteLine(text);
                 var ticks = message.Timestamp.UtcTicks;
                 Append(message.Id, ticks, text);
             }
-            return Task.CompletedTask;
         }
 
         private Task MessageUpdatedAsync(Cacheable<IMessage, ulong> oldMessage, SocketMessage message, ISocketMessageChannel socket)
@@ -193,9 +197,8 @@ namespace DiscordDeleteEcho
 
         private string Format(SocketMessage message)
         {
-            //var result = $"Message deleted in {MentionUtils.MentionChannel(message.Channel.Id)}: <{message.Author.Mention}> ";
             var link = GetLastMessageLink(message);
-            var result = $"Message by {message.Author.Mention} deleted in {MentionUtils.MentionChannel(message.Channel.Id)} after {link}:\n";
+            var result = $"Message by {message.Author.Mention} deleted in {MentionUtils.MentionChannel(message.Channel.Id)} after <{link}>:\n";
             if (!string.IsNullOrWhiteSpace(message.Content))
             {
                 result += message.Content;
