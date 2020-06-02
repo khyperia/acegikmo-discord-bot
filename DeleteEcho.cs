@@ -65,11 +65,6 @@ namespace AcegikmoDiscordBot
         {
             if (IsValidChannel(message.Channel.Id))
             {
-                if (message.Author.Id == 139525105846976512UL && message.Content.StartsWith("!echo "))
-                {
-                    var msg = message.Content.Substring("!echo ".Length).Trim('`');
-                    await message.Channel.SendMessageAsync(msg);
-                }
                 var text = Format(message);
                 Console.WriteLine(text);
                 var ticks = message.Timestamp.UtcTicks;
