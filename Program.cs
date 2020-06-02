@@ -1,13 +1,10 @@
 using System;
-using System.Linq;
-using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using System.Collections.Immutable;
 
 namespace DiscordDeleteEcho
 {
@@ -30,7 +27,7 @@ namespace DiscordDeleteEcho
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
 #pragma warning restore IDE1006 // Naming Styles
 
-    struct Message
+    internal struct Message
     {
         public long Timestamp;
         public string Text;
@@ -62,160 +59,53 @@ namespace DiscordDeleteEcho
         }
     }
 
-    class Program: IDisposable
+    internal class Program : IDisposable
     {
-        readonly Dictionary<ulong, Message> _messages = new Dictionary<ulong, Message>();
-        readonly Dictionary<ulong, string> _lastMessageLink = new Dictionary<ulong, string>();
-        readonly Config _config = Config();
-        readonly DiscordSocketClient _client;
-        readonly StreamWriter _writer;
+        private readonly DeleteEcho _deleteEcho;
+        private readonly Config _config = Config();
+        private readonly DiscordSocketClient _client;
 
-        static Config Config()
+        private static Config Config()
         {
-            using (var stream = File.OpenRead("config.json")) {
-                var json = new DataContractJsonSerializer(typeof(Config));
-                return (Config)json.ReadObject(stream);
-            }
+            using var stream = File.OpenRead("config.json");
+            var json = new DataContractJsonSerializer(typeof(Config));
+            return (Config)json.ReadObject(stream);
         }
 
-        static async Task Main()
+        private static async Task Main()
         {
             var program = new Program();
             await program.Run();
             program.Dispose();
         }
 
-        Program()
+        private Program()
         {
             _client = new DiscordSocketClient();
-            try
-            {
-                var loaded = 0;
-                var trimmed = 0;
-                var thresh = DateTimeOffset.UtcNow.AddMonths(-1).UtcTicks;
-                foreach (var line in File.ReadLines("messages.txt"))
-                {
-                    var msg = Message.Read(line, out var id);
-                    if (msg.Timestamp > thresh)
-                    {
-                        loaded++;
-                        _messages[id] = msg;
-                    }
-                    else
-                    {
-                        trimmed++;
-                    }
-                }
-                Console.WriteLine($"Loaded {loaded} messages");
-                Console.WriteLine($"Trimmed {trimmed} messages over a month old");
-            }
-            catch (Exception e) {
-                Console.WriteLine("Error loading messages.txt:");
-                Console.WriteLine(e);
-            }
-            _writer = File.AppendText("messages.txt");
+            _deleteEcho = new DeleteEcho(_client, _config);
             Console.CancelKeyPress += (sender, args) => Dispose();
         }
 
-        async Task Run()
+        private async Task Run()
         {
             _client.Log += a => { Console.WriteLine(a); return Task.CompletedTask; };
-            _client.MessageReceived += MessageReceivedAsync;
-            _client.MessageUpdated += MessageUpdatedAsync;
-            _client.MessageDeleted += MessageDeletedAsync;
+            _client.MessageReceived += _deleteEcho.MessageReceivedAsync;
+            _client.MessageUpdated += _deleteEcho.MessageUpdatedAsync;
+            _client.MessageDeleted += _deleteEcho.MessageDeletedAsync;
+            _client.MessageReceived += new EchoCommand().MessageReceivedAsync;
+            _client.MessageReceived += new GamesCommand().MessageReceivedAsync;
+            _client.MessageReceived += new HelpCommand().MessageReceivedAsync;
 
             await _client.LoginAsync(TokenType.Bot, _config.token);
             await _client.StartAsync();
-
 
             // Block the program until it is closed.
             await Task.Delay(-1);
         }
 
-        private async Task MessageDeletedAsync(Cacheable<IMessage, ulong> messageId, ISocketMessageChannel socket)
-        {
-            if (_messages.TryGetValue(messageId.Id, out var message))
-            {
-                var modchannel = (IMessageChannel)_client.GetChannel(_config.channel);
-                await modchannel.SendMessageAsync(message.Text);
-            }
-        }
-
-        private bool IsValidChannel(ulong id) => _client.GetGuild(_config.server).Channels.Select(c => c.Id).Contains(id);
-
-        private async Task MessageReceivedAsync(SocketMessage message)
-        {
-            if (IsValidChannel(message.Channel.Id))
-            {
-                if (message.Author.Id == 139525105846976512UL && message.Content.StartsWith("!echo "))
-                {
-                    var msg = message.Content.Substring("!echo ".Length).Trim('`');
-                    await message.Channel.SendMessageAsync(msg);
-                }
-                var text = Format(message);
-                Console.WriteLine(text);
-                var ticks = message.Timestamp.UtcTicks;
-                Append(message.Id, ticks, text);
-            }
-        }
-
-        private Task MessageUpdatedAsync(Cacheable<IMessage, ulong> oldMessage, SocketMessage message, ISocketMessageChannel socket)
-        {
-            if (message.Content != null)
-            {
-                if (IsValidChannel(message.Channel.Id))
-                {
-                    var text = Format(message);
-                    Console.WriteLine(text);
-                    var ticks = message.Timestamp.UtcTicks;
-                    Append(message.Id, ticks, text);
-                }
-            }
-            return Task.CompletedTask;
-        }
-
-        private void Append(ulong id, long ticks, string text)
-        {
-            var message = new Message(ticks, text);
-            _messages[id] = message;
-            _writer.WriteLine(message.Write(id));
-            _writer.Flush();
-        }
-
-        private string GetLastMessageLink(SocketMessage newMessage) {
-            var channel = newMessage.Channel;
-            string lastMessageLink;
-            if (!_lastMessageLink.TryGetValue(channel.Id, out lastMessageLink)) {
-                lastMessageLink = "";
-            }
-            if (channel is IGuildChannel ch) {
-                var newLink = $"https://discordapp.com/channels/{ch.Guild.Id}/{channel.Id}/{newMessage.Id}";
-                _lastMessageLink[channel.Id] = newLink;
-            }
-            return lastMessageLink;
-        }
-
-        private string Format(SocketMessage message)
-        {
-            var link = GetLastMessageLink(message);
-            var result = $"Message by {message.Author.Mention} deleted in {MentionUtils.MentionChannel(message.Channel.Id)} after <{link}>:\n";
-            if (!string.IsNullOrWhiteSpace(message.Content))
-            {
-                result += message.Content;
-            }
-            if (message.Attachments != null && (!(message.Attachments is ImmutableArray<Attachment>) || !((ImmutableArray<Attachment>)message.Attachments).IsDefault))
-            {
-                foreach (var attachment in message.Attachments)
-                {
-                    result += "\n" + attachment.ProxyUrl;
-                }
-            }
-            return result;
-        }
-
         public void Dispose()
         {
-            _writer.Dispose();
+            _deleteEcho.Dispose();
             _client.Dispose();
         }
     }
