@@ -56,20 +56,21 @@ namespace AcegikmoDiscordBot
         {
             if (_messages.TryGetValue(messageId.Id, out var message))
             {
+                Console.WriteLine(message);
                 var modchannel = (IMessageChannel)_client.GetChannel(_config.channel);
                 await modchannel.SendMessageAsync(message.Text);
             }
         }
 
-        public async Task MessageReceivedAsync(SocketMessage message)
+        public Task MessageReceivedAsync(SocketMessage message)
         {
             if (IsValidChannel(message.Channel.Id))
             {
                 var text = Format(message);
-                Console.WriteLine(text);
                 var ticks = message.Timestamp.UtcTicks;
                 Append(message.Id, ticks, text);
             }
+            return Task.CompletedTask;
         }
 
         public Task MessageUpdatedAsync(Cacheable<IMessage, ulong> oldMessage, SocketMessage message, ISocketMessageChannel socket)
@@ -79,7 +80,6 @@ namespace AcegikmoDiscordBot
                 if (IsValidChannel(message.Channel.Id))
                 {
                     var text = Format(message);
-                    Console.WriteLine(text);
                     var ticks = message.Timestamp.UtcTicks;
                     Append(message.Id, ticks, text);
                 }
