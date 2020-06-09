@@ -56,7 +56,7 @@ namespace AcegikmoDiscordBot
         {
             if (_messages.TryGetValue(messageId.Id, out var message))
             {
-                Console.WriteLine(message);
+                Console.WriteLine(message.Text);
                 var modchannel = (IMessageChannel)_client.GetChannel(_config.channel);
                 await modchannel.SendMessageAsync(message.Text);
             }

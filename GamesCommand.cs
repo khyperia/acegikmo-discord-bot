@@ -1,39 +1,19 @@
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 
 namespace AcegikmoDiscordBot
 {
     internal class GamesCommand
     {
-        private static readonly DataContractJsonSerializer Json = new DataContractJsonSerializer(typeof(Dictionary<string, List<ulong>>));
-        private readonly Dictionary<string, List<ulong>> _gameDict;
+        private readonly Json<Dictionary<string, List<ulong>>> _json = new Json<Dictionary<string, List<ulong>>>("games.json");
 
-        public GamesCommand()
-        {
-            try
-            {
-                using var stream = File.OpenRead("games.json");
-                _gameDict = (Dictionary<string, List<ulong>>)Json.ReadObject(stream);
-            }
-            catch (FileNotFoundException)
-            {
-                Console.WriteLine("games.json not found, defaulting to empty dict");
-                _gameDict = new Dictionary<string, List<ulong>>();
-            }
-        }
+        private Dictionary<string, List<ulong>> GameDict => _json.Data;
 
-        private void SaveDict()
-        {
-            using var stream = File.Create("games.json");
-            Json.WriteObject(stream, _gameDict);
-        }
+        private void SaveDict() => _json.Save();
 
         private static async Task Checkmark(SocketMessage message)
         {
@@ -92,9 +72,9 @@ namespace AcegikmoDiscordBot
 
         private async Task AddGame(SocketMessage message, string game)
         {
-            if (!_gameDict.TryGetValue(game, out var list))
+            if (!GameDict.TryGetValue(game, out var list))
             {
-                list = _gameDict[game] = new List<ulong>();
+                list = GameDict[game] = new List<ulong>();
             }
             if (list.Contains(message.Author.Id))
             {
@@ -110,7 +90,7 @@ namespace AcegikmoDiscordBot
 
         private async Task DelGame(SocketMessage message, string game)
         {
-            if (!_gameDict.TryGetValue(game, out var list) || !list.Remove(message.Author.Id))
+            if (!GameDict.TryGetValue(game, out var list) || !list.Remove(message.Author.Id))
             {
                 await message.Channel.SendMessageAsync($"You are not in the list for {game}");
             }
@@ -118,7 +98,7 @@ namespace AcegikmoDiscordBot
             {
                 if (list.Count == 0)
                 {
-                    _gameDict.Remove(game);
+                    GameDict.Remove(game);
                 }
                 SaveDict();
                 await Checkmark(message);
@@ -127,7 +107,7 @@ namespace AcegikmoDiscordBot
 
         private async Task PingGame(SocketMessage message, string game)
         {
-            if (!_gameDict.TryGetValue(game, out var list))
+            if (!GameDict.TryGetValue(game, out var list))
             {
                 await message.Channel.SendMessageAsync($"Nobody's in the list for {game}.");
             }
@@ -146,11 +126,11 @@ namespace AcegikmoDiscordBot
         }
 
         private Task ListGames(SocketMessage message) =>
-             message.Channel.SendMessageAsync($"All pingable games (and number of people): {string.Join(", ", _gameDict.Select(kvp => $"{kvp.Key} ({kvp.Value.Count})"))}");
+             message.Channel.SendMessageAsync($"All pingable games (and number of people): {string.Join(", ", GameDict.Select(kvp => $"{kvp.Key} ({kvp.Value.Count})"))}");
 
         private async Task MyGames(SocketMessage message)
         {
-            var result = string.Join(", ", _gameDict.Where(kvp => kvp.Value.Contains(message.Author.Id)).Select(kvp => kvp.Key));
+            var result = string.Join(", ", GameDict.Where(kvp => kvp.Value.Contains(message.Author.Id)).Select(kvp => kvp.Key));
             if (string.IsNullOrEmpty(result))
             {
                 await message.Channel.SendMessageAsync($"You're not in any games list");
@@ -163,7 +143,7 @@ namespace AcegikmoDiscordBot
 
         private async Task NukeGame(SocketMessage message, string game)
         {
-            _gameDict.Remove(game);
+            GameDict.Remove(game);
             SaveDict();
             await Checkmark(message);
         }
@@ -181,9 +161,9 @@ namespace AcegikmoDiscordBot
             }
             else
             {
-                if (!_gameDict.TryGetValue(thing[1], out var list))
+                if (!GameDict.TryGetValue(thing[1], out var list))
                 {
-                    list = _gameDict[thing[1]] = new List<ulong>();
+                    list = GameDict[thing[1]] = new List<ulong>();
                 }
                 if (list.Contains(id))
                 {
@@ -205,7 +185,7 @@ namespace AcegikmoDiscordBot
             {
                 await message.Channel.SendMessageAsync("!delusergame id game");
             }
-            else if (!_gameDict.TryGetValue(thing[1], out var list))
+            else if (!GameDict.TryGetValue(thing[1], out var list))
             {
                 await message.Channel.SendMessageAsync("game not found");
             }
@@ -221,7 +201,7 @@ namespace AcegikmoDiscordBot
             {
                 if (list.Count == 0)
                 {
-                    _gameDict.Remove(thing[1]);
+                    GameDict.Remove(thing[1]);
                 }
                 SaveDict();
                 await Checkmark(message);
