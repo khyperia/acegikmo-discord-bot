@@ -6,8 +6,7 @@ namespace AcegikmoDiscordBot
 {
     internal class Json<T> where T : new()
     {
-        private static readonly DataContractJsonSerializer SimpleSerializer = new DataContractJsonSerializer(typeof(T), new DataContractJsonSerializerSettings() { UseSimpleDictionaryFormat = true });
-        private static readonly DataContractJsonSerializer OldSerializer = new DataContractJsonSerializer(typeof(T));
+        private static readonly DataContractJsonSerializer Serializer = new DataContractJsonSerializer(typeof(T), new DataContractJsonSerializerSettings() { UseSimpleDictionaryFormat = true });
         private readonly string _jsonFile;
         public T Data { get; }
 
@@ -15,20 +14,8 @@ namespace AcegikmoDiscordBot
         {
             try
             {
-                try
-                {
-                    using var stream = File.OpenRead(jsonFile);
-                    Console.WriteLine("Reading simple");
-                    Data = (T)SimpleSerializer.ReadObject(stream);
-                    Console.WriteLine("Reading simple success: " + Data);
-                }
-                catch
-                {
-                    using var stream = File.OpenRead(jsonFile);
-                    Console.WriteLine("Reading old");
-                    Data = (T)OldSerializer.ReadObject(stream);
-                    Console.WriteLine("Reading old success: " + Data);
-                }
+                using var stream = File.OpenRead(jsonFile);
+                Data = (T)Serializer.ReadObject(stream);
             }
             catch (FileNotFoundException)
             {
@@ -41,7 +28,7 @@ namespace AcegikmoDiscordBot
         public void Save()
         {
             using var stream = File.Create(_jsonFile);
-            SimpleSerializer.WriteObject(stream, Data);
+            Serializer.WriteObject(stream, Data);
         }
     }
 }
