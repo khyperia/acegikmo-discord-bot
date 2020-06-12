@@ -126,11 +126,11 @@ namespace AcegikmoDiscordBot
         }
 
         private Task ListGames(SocketMessage message) =>
-             message.Channel.SendMessageAsync($"All pingable games (and number of people): {string.Join(", ", GameDict.Select(kvp => $"{kvp.Key} ({kvp.Value.Count})"))}");
+             message.Channel.SendMessageAsync($"All pingable games (and number of people): {string.Join(", ", GameDict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key} ({kvp.Value.Count})"))}");
 
         private async Task MyGames(SocketMessage message)
         {
-            var result = string.Join(", ", GameDict.Where(kvp => kvp.Value.Contains(message.Author.Id)).Select(kvp => kvp.Key));
+            var result = string.Join(", ", GameDict.Where(kvp => kvp.Value.Contains(message.Author.Id)).Select(kvp => kvp.Key).OrderBy(x => x));
             if (string.IsNullOrEmpty(result))
             {
                 await message.Channel.SendMessageAsync($"You're not in any games list");
