@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static AcegikmoDiscordBot.Program;
 
 namespace AcegikmoDiscordBot
 {
@@ -53,17 +54,17 @@ namespace AcegikmoDiscordBot
             {
                 await MyGames(message);
             }
-            if (message.Author.Id == 139525105846976512UL && message.Content.StartsWith("!nukegame "))
+            if (message.Author.Id == ASHL && message.Content.StartsWith("!nukegame "))
             {
                 var game = message.Content.Substring("!nukegame ".Length);
                 await NukeGame(message, game);
             }
-            if (message.Author.Id == 139525105846976512UL && message.Content.StartsWith("!addusergame "))
+            if (message.Author.Id == ASHL && message.Content.StartsWith("!addusergame "))
             {
                 var cmd = message.Content.Substring("!addusergame ".Length);
                 await AddUserGame(message, cmd);
             }
-            if (message.Author.Id == 139525105846976512UL && message.Content.StartsWith("!delusergame "))
+            if (message.Author.Id == ASHL && message.Content.StartsWith("!delusergame "))
             {
                 var cmd = message.Content.Substring("!delusergame ".Length);
                 await DelUserGame(message, cmd);

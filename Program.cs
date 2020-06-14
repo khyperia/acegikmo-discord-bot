@@ -27,41 +27,11 @@ namespace AcegikmoDiscordBot
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
 #pragma warning restore IDE1006 // Naming Styles
 
-    internal struct Message
-    {
-        public long Timestamp;
-        public string Text;
-
-        public Message(long timestamp, string text)
-        {
-            Timestamp = timestamp;
-            Text = text;
-        }
-
-        public string Write(ulong id)
-        {
-            var msg = Text
-                .Replace(@"\", @"\\")
-                .Replace("\r", "\\r")
-                .Replace("\n", "\\n");
-            return $"{Timestamp} {id} {msg}";
-        }
-
-        public static Message Read(string text, out ulong id)
-        {
-            var arr = text.Split(new[] { ' ' }, 3);
-            var msg = arr[2]
-                .Replace("\\n", "\n")
-                .Replace("\\r", "\r")
-                .Replace(@"\\", @"\");
-            id = ulong.Parse(arr[1]);
-            return new Message(long.Parse(arr[0]), msg);
-        }
-    }
-
     internal class Program : IDisposable
     {
-        private readonly DeleteEcho _deleteEcho;
+        public static ulong ASHL = 139525105846976512UL;
+
+        private readonly Log _log;
         private readonly Config _config = Config();
         private readonly DiscordSocketClient _client;
 
@@ -74,28 +44,27 @@ namespace AcegikmoDiscordBot
 
         private static async Task Main()
         {
-            var program = new Program();
+            using var program = new Program();
             await program.Run();
-            program.Dispose();
         }
 
         private Program()
         {
             _client = new DiscordSocketClient();
-            _deleteEcho = new DeleteEcho(_client, _config);
+            _log = new Log();
             Console.CancelKeyPress += (sender, args) => Dispose();
         }
 
         private async Task Run()
         {
             _client.Log += a => { Console.WriteLine(a); return Task.CompletedTask; };
-            _client.MessageReceived += _deleteEcho.MessageReceivedAsync;
-            _client.MessageUpdated += _deleteEcho.MessageUpdatedAsync;
-            _client.MessageDeleted += _deleteEcho.MessageDeletedAsync;
+            _client.MessageDeleted += new DeleteEcho(_log, _config).MessageDeletedAsync;
             _client.MessageReceived += new EchoCommand().MessageReceivedAsync;
             _client.MessageReceived += new GamesCommand().MessageReceivedAsync;
             _client.MessageReceived += new HelpCommand().MessageReceivedAsync;
             _client.MessageReceived += new MemberizerCommand().MessageReceivedAsync;
+            _client.MessageReceived += _log.MessageReceivedAsync;
+            _client.MessageUpdated += _log.MessageUpdatedAsync;
 
             await _client.LoginAsync(TokenType.Bot, _config.token);
             await _client.StartAsync();
@@ -106,8 +75,8 @@ namespace AcegikmoDiscordBot
 
         public void Dispose()
         {
-            _deleteEcho.Dispose();
             _client.Dispose();
+            _log.Dispose();
         }
     }
 }

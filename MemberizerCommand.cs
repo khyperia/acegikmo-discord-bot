@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static AcegikmoDiscordBot.Program;
 
 namespace AcegikmoDiscordBot
 {
@@ -11,29 +12,29 @@ namespace AcegikmoDiscordBot
         private static readonly Json<Dictionary<ulong, ulong>> Json = new Json<Dictionary<ulong, ulong>>("memberizer.json");
 
         private const ulong MembersRole = 528976700399419406UL;
-        private readonly TimeSpan SaveFrequency = TimeSpan.FromMinutes(10);
-        private DateTime LastSaved = DateTime.UtcNow;
+        private readonly TimeSpan _saveFrequency = TimeSpan.FromMinutes(10);
+        private DateTime _lastSaved = DateTime.UtcNow;
 
         private void TrySave()
         {
             var now = DateTime.UtcNow;
-            if (now - LastSaved > SaveFrequency)
+            if (now - _lastSaved > _saveFrequency)
             {
-                LastSaved = now;
+                _lastSaved = now;
                 Json.Save();
             }
         }
 
         public async Task MessageReceivedAsync(SocketMessage message)
         {
-            if (message.Author.Id == 139525105846976512UL &&
+            if (message.Author.Id == ASHL &&
                 message.Content == "!memberizer")
             {
                 var sum = Json.Data.Values.Sum(v => (long)v);
                 var msg = $"{Json.Data.Count} users have sent {sum} messages";
                 await message.Channel.SendMessageAsync(msg);
             }
-            if (message.Author.Id == 139525105846976512UL &&
+            if (message.Author.Id == ASHL &&
                 message.Content.StartsWith("!memberizer ") &&
                 ulong.TryParse(message.Content.Substring("!memberizer ".Length), out var desiredCount) &&
                 message.Channel is SocketGuildChannel channel)
@@ -52,14 +53,14 @@ namespace AcegikmoDiscordBot
                     }
                 }
                 Json.Save();
-                LastSaved = DateTime.UtcNow;
+                _lastSaved = DateTime.UtcNow;
                 var msg = string.Join("\n", gucciUsers.OrderBy(kvp => kvp.Value).Select(kvp => $"{kvp.Key.Mention} has sent {kvp.Value} messages"));
                 if (!string.IsNullOrEmpty(msg))
                 {
                     await message.Channel.SendMessageAsync(msg);
                 }
             }
-            if (message.Author.Id == 139525105846976512UL &&
+            if (message.Author.Id == ASHL &&
                 message.Content == "!memberizer-init" &&
                 message.Channel is SocketGuildChannel ch)
             {
@@ -77,7 +78,7 @@ namespace AcegikmoDiscordBot
                     }
                 }
                 Json.Save();
-                LastSaved = DateTime.UtcNow;
+                _lastSaved = DateTime.UtcNow;
                 var response = $"Added {numMessages} messages to db";
                 await message.Channel.SendMessageAsync(response);
             }

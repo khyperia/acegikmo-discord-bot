@@ -1,5 +1,6 @@
 using Discord.WebSocket;
 using System.Threading.Tasks;
+using static AcegikmoDiscordBot.Program;
 
 namespace AcegikmoDiscordBot
 {
@@ -7,7 +8,7 @@ namespace AcegikmoDiscordBot
     {
         public async Task MessageReceivedAsync(SocketMessage message)
         {
-            if (message.Author.Id == 139525105846976512UL && message.Content.StartsWith("!echo "))
+            if (message.Author.Id == ASHL && message.Content.StartsWith("!echo "))
             {
                 var msg = message.Content.Substring("!echo ".Length).Trim('`');
                 await message.Channel.SendMessageAsync(msg);
