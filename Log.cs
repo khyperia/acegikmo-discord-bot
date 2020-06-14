@@ -2,6 +2,8 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Data.Sqlite;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 using System.Threading.Tasks;
@@ -132,10 +134,11 @@ namespace AcegikmoDiscordBot
             }
         }
 
-        public bool TryGetPreviousMessage(ulong messageId, out MessageDb message)
+        public bool TryGetPreviousMessage(ulong messageId, ulong channelId, out MessageDb message)
         {
             using var cmd = _sql.CreateCommand();
-            cmd.CommandText = "SELECT * FROM log WHERE message_id < @message_id ORDER BY message_id DESC LIMIT 1";
+            cmd.CommandText = "SELECT * FROM log WHERE channel_id = @channel_id AND message_id < @message_id ORDER BY message_id DESC LIMIT 1";
+            cmd.Parameters.AddWithValue("channel_id", (long)channelId);
             cmd.Parameters.AddWithValue("message_id", (long)messageId);
             var reader = cmd.ExecuteReader();
             if (reader.Read())
@@ -147,6 +150,35 @@ namespace AcegikmoDiscordBot
             {
                 message = default;
                 return false;
+            }
+        }
+
+        public IEnumerable<(ulong authorId, ulong count)> MessageCounts(IEnumerable<ulong> userIds, ulong limit)
+        {
+            using var cmd = _sql.CreateCommand();
+            cmd.CommandText = $"SELECT author_id, COUNT(*) as message_count FROM log WHERE author_id IN ({string.Join(",", userIds)}) GROUP BY author_id ORDER BY message_count DESC";
+            var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                ulong author = 0;
+                ulong count = 0;
+                for (var col = 0; col < reader.FieldCount; col++)
+                {
+                    switch (reader.GetName(col))
+                    {
+                        case "author_id":
+                            author = Convert.ToUInt64(reader.GetValue(col));
+                            break;
+                        case "message_count":
+                            count = Convert.ToUInt64(reader.GetValue(col));
+                            break;
+                    }
+                }
+                // TODO: Move the count filter inside query
+                if (author != 0 && count >= limit)
+                {
+                    yield return (author, count);
+                }
             }
         }
 

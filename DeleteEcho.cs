@@ -20,7 +20,7 @@ namespace AcegikmoDiscordBot
         {
             if (_log.TryGetMessage(messageId.Id, out var message) && socket is IGuildChannel socketGuild && socketGuild.GuildId == _config.server)
             {
-                var after = _log.TryGetPreviousMessage(messageId.Id, out var previous)
+                var after = _log.TryGetPreviousMessage(messageId.Id, socket.Id, out var previous)
                     ? $" after <https://discordapp.com/channels/{socketGuild.GuildId}/{previous.ChannelId}/{previous.MessageId}>"
                     : "";
                 var toSend = $"Message by {MentionUtils.MentionUser(message.AuthorId)} deleted in {MentionUtils.MentionChannel(message.ChannelId)}{after}:\n{message.Message}";
