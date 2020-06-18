@@ -1,6 +1,5 @@
 using Discord;
 using Discord.WebSocket;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -34,6 +33,12 @@ namespace AcegikmoDiscordBot
                 {
                     await message.Channel.SendMessageAsync(msg);
                 }
+            }
+            if (message.Author.Id == ASHL && message.Content == "!membercount" && message.Channel is SocketGuildChannel ch)
+            {
+                var roles = string.Join(", ", ch.Guild.Roles.Select(role => $"{role.Name.Replace("@everyone", "at-everyone")}={role.Members.Count()}"));
+                var msg = $"total={ch.Guild.MemberCount}, {roles}";
+                await message.Channel.SendMessageAsync(msg);
             }
         }
 

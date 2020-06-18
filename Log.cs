@@ -2,7 +2,6 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Data.Sqlite;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
