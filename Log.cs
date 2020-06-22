@@ -19,28 +19,33 @@ namespace AcegikmoDiscordBot
             public ulong AuthorId;
             public string Message;
 
-            public static MessageDb Read(SqliteDataReader row)
+            public static bool Read(SqliteDataReader row, out MessageDb result)
             {
-                var result = new MessageDb();
+                bool message = false, channel = false, author = false, content = false;
+                result = default;
                 for (var i = 0; i < row.FieldCount; i++)
                 {
                     switch (row.GetName(i))
                     {
                         case "message_id":
                             result.MessageId = Convert.ToUInt64(row.GetValue(i));
+                            message = true;
                             break;
                         case "channel_id":
                             result.ChannelId = Convert.ToUInt64(row.GetValue(i));
+                            channel = true;
                             break;
                         case "author_id":
                             result.AuthorId = Convert.ToUInt64(row.GetValue(i));
+                            author = true;
                             break;
                         case "message":
                             result.Message = (string)row.GetValue(i);
+                            content = true;
                             break;
                     }
                 }
-                return result;
+                return message && channel && author && content;
             }
         }
 
@@ -123,8 +128,7 @@ namespace AcegikmoDiscordBot
             var reader = cmd.ExecuteReader();
             if (reader.Read())
             {
-                message = MessageDb.Read(reader);
-                return true;
+                return MessageDb.Read(reader, out message);
             }
             else
             {
@@ -142,8 +146,7 @@ namespace AcegikmoDiscordBot
             var reader = cmd.ExecuteReader();
             if (reader.Read())
             {
-                message = MessageDb.Read(reader);
-                return true;
+                return MessageDb.Read(reader, out message);
             }
             else
             {
