@@ -18,7 +18,7 @@ namespace AcegikmoDiscordBot
 
         public async Task MessageDeletedAsync(Cacheable<IMessage, ulong> messageId, ISocketMessageChannel socket)
         {
-            if (socket is IGuildChannel socketGuild && socketGuild.GuildId == _config.server)
+            if (socket is IGuildChannel socketGuild && socketGuild.GuildId == _config.server && socket.Id != _config.channel)
             {
                 var modchannel = await socketGuild.Guild.GetTextChannelAsync(_config.channel);
                 if (_log.TryGetMessage(messageId.Id, out var message))

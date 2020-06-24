@@ -1,7 +1,9 @@
+using Discord;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using static AcegikmoDiscordBot.Program;
 
@@ -46,19 +48,31 @@ namespace AcegikmoDiscordBot
             Console.WriteLine("Done trimming. Starting channel trim.");
             var toDelete = await GetMessagesToDelete(modchannel).Distinct().ToListAsync();
             Console.WriteLine($"Deleting {toDelete.Count} messages");
-            await modchannel.DeleteMessagesAsync(toDelete);
+            DateTimeOffset twoWeeks = DateTime.UtcNow.AddDays(-13);
+            await modchannel.DeleteMessagesAsync(toDelete.Where(item => SnowflakeUtils.FromSnowflake(item) > twoWeeks));
+            var others = toDelete.Where(item => SnowflakeUtils.FromSnowflake(item) <= twoWeeks).ToList();
+            Console.WriteLine($"Done deleting bulk, now deleting others: {others.Count}");
+            var i = 0;
+            foreach (var thing in others)
+            {
+                await modchannel.DeleteMessageAsync(thing);
+                await Task.Delay(1000);
+                Console.WriteLine($"{i++}/{others.Count}");
+            }
             Console.WriteLine($"Done");
         }
 
         private async IAsyncEnumerable<ulong> GetMessagesToDelete(SocketTextChannel channel)
         {
+            DateTimeOffset timeLimit = DateTime.UtcNow.AddDays(-7);
             var limit = 1000;
             var youngest = ulong.MaxValue;
             await foreach (var collection in channel.GetMessagesAsync(limit))
             {
                 foreach (var item in collection)
                 {
-                    yield return item.Id;
+                    if (item.CreatedAt < timeLimit)
+                        yield return item.Id;
                     youngest = Math.Min(youngest, item.Id);
                 }
             }
@@ -70,7 +84,8 @@ namespace AcegikmoDiscordBot
                     foreach (var item in collection)
                     {
                         count++;
-                        yield return item.Id;
+                        if (item.CreatedAt < timeLimit)
+                            yield return item.Id;
                         youngest = Math.Min(youngest, item.Id);
                     }
                 }
