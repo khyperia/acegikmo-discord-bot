@@ -62,6 +62,15 @@ namespace AcegikmoDiscordBot
 
         public void Dispose() => _sql.Dispose();
 
+        public void Trim()
+        {
+            using var cmd = _sql.CreateCommand();
+            cmd.CommandText = "DELETE FROM log WHERE message_id < @message_id";
+            var cutoff = SnowflakeUtils.ToSnowflake(DateTime.UtcNow.AddDays(-7));
+            cmd.Parameters.AddWithValue("message_id", (long)cutoff);
+            cmd.ExecuteNonQuery();
+        }
+
         public async Task MessageReceivedAsync(SocketMessage message)
         {
             if (message.Author.Id == ASHL &&
@@ -111,7 +120,7 @@ namespace AcegikmoDiscordBot
 
         private void LogMessage(SocketMessage message)
         {
-            var cmd = _sql.CreateCommand();
+            using var cmd = _sql.CreateCommand();
             cmd.CommandText = "INSERT OR REPLACE INTO log VALUES(@message_id, @channel_id, @author_id, @message)";
             cmd.Parameters.AddWithValue("message_id", (long)message.Id);
             cmd.Parameters.AddWithValue("channel_id", (long)message.Channel.Id);

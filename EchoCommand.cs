@@ -1,5 +1,6 @@
 using Discord;
 using Discord.WebSocket;
+using System;
 using System.Threading.Tasks;
 using static AcegikmoDiscordBot.Program;
 
@@ -18,6 +19,11 @@ namespace AcegikmoDiscordBot
             {
                 var time = SnowflakeUtils.FromSnowflake(snowflake);
                 await message.Channel.SendMessageAsync(time.DateTime.ToString("r"));
+            }
+            if (message.Author.Id == ASHL && message.Content.StartsWith("!timetosnowflake ") && DateTime.TryParse(message.Content.Substring("!timetosnowflake ".Length), out var thingyTime))
+            {
+                var theSnowflake = SnowflakeUtils.ToSnowflake(thingyTime);
+                await message.Channel.SendMessageAsync(theSnowflake.ToString());
             }
         }
     }

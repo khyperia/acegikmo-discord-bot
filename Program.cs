@@ -63,6 +63,7 @@ namespace AcegikmoDiscordBot
             _client.MessageReceived += new GamesCommand().MessageReceivedAsync;
             _client.MessageReceived += new HelpCommand().MessageReceivedAsync;
             _client.MessageReceived += new MemberizerCommand(_log).MessageReceivedAsync;
+            _client.MessageReceived += new TimingThing(_log, _config).MessageReceivedAsync;
             _client.MessageReceived += _log.MessageReceivedAsync;
             _client.MessageUpdated += _log.MessageUpdatedAsync;
 

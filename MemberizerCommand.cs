@@ -17,22 +17,27 @@ namespace AcegikmoDiscordBot
             _log = log;
         }
 
+        public static async Task Memberizer(Log log, SocketTextChannel channel, ulong desiredCount)
+        {
+            var guild = channel.Guild;
+            var gucciUsers = new Dictionary<SocketGuildUser, ulong>();
+            var nonmembers = guild.Users.Where(user => !IsMember(user)).Select(user => user.Id).ToList();
+            var counts = log.MessageCounts(nonmembers, desiredCount);
+            var msg = string.Join("\n", counts.Select(item => $"{MentionUtils.MentionUser(item.authorId)} has sent {item.count} messages"));
+            if (!string.IsNullOrEmpty(msg))
+            {
+                await channel.SendMessageAsync(msg);
+            }
+        }
+
         public async Task MessageReceivedAsync(SocketMessage message)
         {
             if (message.Author.Id == ASHL &&
                 message.Content.StartsWith("!memberizer ") &&
                 ulong.TryParse(message.Content.Substring("!memberizer ".Length), out var desiredCount) &&
-                message.Channel is SocketGuildChannel channel)
+                message.Channel is SocketTextChannel channel)
             {
-                var guild = channel.Guild;
-                var gucciUsers = new Dictionary<SocketGuildUser, ulong>();
-                var nonmembers = guild.Users.Where(user => !IsMember(user)).Select(user => user.Id).ToList();
-                var counts = _log.MessageCounts(nonmembers, desiredCount);
-                var msg = string.Join("\n", counts.Select(item => $"{MentionUtils.MentionUser(item.authorId)} has sent {item.count} messages"));
-                if (!string.IsNullOrEmpty(msg))
-                {
-                    await message.Channel.SendMessageAsync(msg);
-                }
+                await Memberizer(_log, channel, desiredCount);
             }
             if (message.Author.Id == ASHL && message.Content == "!membercount" && message.Channel is SocketGuildChannel ch)
             {
@@ -42,7 +47,7 @@ namespace AcegikmoDiscordBot
             }
         }
 
-        private bool IsMember(SocketGuildUser user)
+        private static bool IsMember(SocketGuildUser user)
         {
             foreach (var role in user.Roles)
             {
