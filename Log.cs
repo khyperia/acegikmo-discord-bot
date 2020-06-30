@@ -120,12 +120,18 @@ namespace AcegikmoDiscordBot
 
         private void LogMessage(SocketMessage message)
         {
+            var content = Format(message);
+            if (content == "" && message.Author.Id == 0)
+            {
+                Console.WriteLine($"Empty content/author ID message ({message.GetType().FullName}, type {(message as IMessage)?.Type}, source {message.Source}): https://discordapp.com/channels/{(message.Channel as IGuildChannel)?.GuildId ?? 0}/{message.Channel.Id}/{message.Id}");
+                return;
+            }
             using var cmd = _sql.CreateCommand();
             cmd.CommandText = "INSERT OR REPLACE INTO log VALUES(@message_id, @channel_id, @author_id, @message)";
             cmd.Parameters.AddWithValue("message_id", (long)message.Id);
             cmd.Parameters.AddWithValue("channel_id", (long)message.Channel.Id);
             cmd.Parameters.AddWithValue("author_id", (long)message.Author.Id);
-            cmd.Parameters.AddWithValue("message", Format(message));
+            cmd.Parameters.AddWithValue("message", content);
             cmd.ExecuteNonQuery();
         }
 
