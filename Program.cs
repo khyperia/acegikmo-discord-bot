@@ -12,7 +12,7 @@ namespace AcegikmoDiscordBot
 #pragma warning disable CS8618 // Non-nullable field is uninitialized.
 #pragma warning disable CS0649
     [DataContract]
-    internal class Config
+    internal class ConfigClass
     {
         [DataMember]
         internal string token;
@@ -32,14 +32,14 @@ namespace AcegikmoDiscordBot
         public static ulong ASHL = 139525105846976512UL;
 
         private readonly Log _log;
-        private readonly Config _config = Config();
+        public static readonly ConfigClass Config = GetConfig();
         private readonly DiscordSocketClient _client;
 
-        private static Config Config()
+        private static ConfigClass GetConfig()
         {
             using var stream = File.OpenRead("config.json");
-            var json = new DataContractJsonSerializer(typeof(Config));
-            return (Config)json.ReadObject(stream);
+            var json = new DataContractJsonSerializer(typeof(ConfigClass));
+            return (ConfigClass)json.ReadObject(stream);
         }
 
         private static async Task Main()
@@ -50,7 +50,10 @@ namespace AcegikmoDiscordBot
 
         private Program()
         {
-            _client = new DiscordSocketClient();
+            _client = new DiscordSocketClient(new DiscordSocketConfig
+            {
+                ExclusiveBulkDelete = true,
+            });
             _log = new Log();
             Console.CancelKeyPress += (sender, args) => Dispose();
         }
@@ -58,16 +61,17 @@ namespace AcegikmoDiscordBot
         private async Task Run()
         {
             _client.Log += a => { Console.WriteLine(a); return Task.CompletedTask; };
-            _client.MessageDeleted += new DeleteEcho(_log, _config).MessageDeletedAsync;
+            _client.MessageDeleted += new DeleteEcho(_log).MessageDeletedAsync;
             _client.MessageReceived += new EchoCommand().MessageReceivedAsync;
             _client.MessageReceived += new GamesCommand().MessageReceivedAsync;
             _client.MessageReceived += new HelpCommand().MessageReceivedAsync;
+            _client.MessageReceived += new PronounCommand().MessageReceivedAsync;
             _client.MessageReceived += new MemberizerCommand(_log).MessageReceivedAsync;
-            _client.MessageReceived += new TimingThing(_log, _config).MessageReceivedAsync;
+            _client.MessageReceived += new TimingThing(_log).MessageReceivedAsync;
             _client.MessageReceived += _log.MessageReceivedAsync;
             _client.MessageUpdated += _log.MessageUpdatedAsync;
 
-            await _client.LoginAsync(TokenType.Bot, _config.token);
+            await _client.LoginAsync(TokenType.Bot, Config.token);
             await _client.StartAsync();
 
             // Block the program until it is closed.

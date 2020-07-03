@@ -45,6 +45,11 @@ namespace AcegikmoDiscordBot
                 var msg = $"total={ch.Guild.MemberCount}, {roles}";
                 await message.Channel.SendMessageAsync(msg);
             }
+            if (message.Author.Id == ASHL && message.Content == "!roles" && message.Channel is SocketGuildChannel ch2)
+            {
+                var msg = string.Join(", ", ch2.Guild.Roles.Select(role => $"{role.Name.Replace("@everyone", "at-everyone")}={role.Id}"));
+                await message.Channel.SendMessageAsync(msg);
+            }
         }
 
         private static bool IsMember(SocketGuildUser user)

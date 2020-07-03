@@ -2,25 +2,24 @@ using Discord;
 using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
+using static AcegikmoDiscordBot.Program;
 
 namespace AcegikmoDiscordBot
 {
     internal class DeleteEcho
     {
         private readonly Log _log;
-        private readonly Config _config;
 
-        public DeleteEcho(Log log, Config config)
+        public DeleteEcho(Log log)
         {
             _log = log;
-            _config = config;
         }
 
         public async Task MessageDeletedAsync(Cacheable<IMessage, ulong> messageId, ISocketMessageChannel socket)
         {
-            if (socket is IGuildChannel socketGuild && socketGuild.GuildId == _config.server && socket.Id != _config.channel)
+            if (socket is IGuildChannel socketGuild && socketGuild.GuildId == Config.server && socket.Id != Config.channel)
             {
-                var modchannel = await socketGuild.Guild.GetTextChannelAsync(_config.channel);
+                var modchannel = await socketGuild.Guild.GetTextChannelAsync(Config.channel);
                 if (_log.TryGetMessage(messageId.Id, out var message))
                 {
                     var after = _log.TryGetPreviousMessage(messageId.Id, socket.Id, out var previous)

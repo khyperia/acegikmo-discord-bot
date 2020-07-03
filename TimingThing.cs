@@ -11,13 +11,11 @@ namespace AcegikmoDiscordBot
     internal class TimingThing
     {
         private readonly Log _log;
-        private readonly Config _config;
         private DateTime _nextUpdate;
 
-        public TimingThing(Log log, Config config)
+        public TimingThing(Log log)
         {
             _log = log;
-            _config = config;
         }
 
         private void SetNextUpdate()
@@ -27,11 +25,11 @@ namespace AcegikmoDiscordBot
 
         public async Task MessageReceivedAsync(SocketMessage message)
         {
-            if (DateTime.UtcNow > _nextUpdate && message.Channel is SocketTextChannel messageChannel && messageChannel.Guild.Id == _config.server)
+            if (DateTime.UtcNow > _nextUpdate && message.Channel is SocketTextChannel messageChannel && messageChannel.Guild.Id == Config.server)
             {
                 await DoTimer(messageChannel);
             }
-            else if (message.Author.Id == ASHL && message.Content == "!dotimer" && message.Channel is SocketTextChannel messageChannel2 && messageChannel2.Guild.Id == _config.server)
+            else if (message.Author.Id == ASHL && message.Content == "!dotimer" && message.Channel is SocketTextChannel messageChannel2 && messageChannel2.Guild.Id == Config.server)
             {
                 await DoTimer(messageChannel2);
             }
@@ -40,7 +38,7 @@ namespace AcegikmoDiscordBot
         private async Task DoTimer(SocketTextChannel messageChannel)
         {
             SetNextUpdate();
-            var modchannel = messageChannel.Guild.GetTextChannel(_config.channel);
+            var modchannel = messageChannel.Guild.GetTextChannel(Config.channel);
             await MemberizerCommand.Memberizer(_log, modchannel, 50);
             Console.WriteLine("Trimming...");
             _log.Trim();
@@ -50,13 +48,16 @@ namespace AcegikmoDiscordBot
             DateTimeOffset twoWeeks = DateTime.UtcNow.AddDays(-13);
             await modchannel.DeleteMessagesAsync(toDelete.Where(item => SnowflakeUtils.FromSnowflake(item) > twoWeeks));
             var others = toDelete.Where(item => SnowflakeUtils.FromSnowflake(item) <= twoWeeks).ToList();
-            Console.WriteLine($"Done deleting bulk, now deleting others: {others.Count}");
-            var i = 0;
-            foreach (var thing in others)
+            if (others.Count > 0)
             {
-                await modchannel.DeleteMessageAsync(thing);
-                await Task.Delay(1000);
-                Console.WriteLine($"{i++}/{others.Count}");
+                Console.WriteLine($"Done deleting bulk, now deleting others: {others.Count}");
+                var i = 0;
+                foreach (var thing in others)
+                {
+                    await modchannel.DeleteMessageAsync(thing);
+                    await Task.Delay(1000);
+                    Console.WriteLine($"{i++}/{others.Count}");
+                }
             }
             Console.WriteLine($"Done");
         }
@@ -66,13 +67,22 @@ namespace AcegikmoDiscordBot
             DateTimeOffset timeLimit = DateTime.UtcNow.AddDays(-7);
             var limit = 1000;
             var youngest = ulong.MaxValue;
-            await foreach (var collection in channel.GetMessagesAsync(limit))
             {
-                foreach (var item in collection)
+                var count = 0;
+                await foreach (var collection in channel.GetMessagesAsync(limit))
                 {
-                    if (item.CreatedAt < timeLimit)
-                        yield return item.Id;
-                    youngest = Math.Min(youngest, item.Id);
+                    count++;
+                    foreach (var item in collection)
+                    {
+                        if (item.CreatedAt < timeLimit)
+                            yield return item.Id;
+                        youngest = Math.Min(youngest, item.Id);
+                    }
+                }
+                if (count != limit)
+                {
+                    Console.WriteLine($"Done yielding items in the first batch ({count} != {limit})");
+                    yield break;
                 }
             }
             for (var i = 0; ; i++)

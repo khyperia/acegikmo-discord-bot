@@ -16,7 +16,7 @@ namespace AcegikmoDiscordBot
 
         private void SaveDict() => _json.Save();
 
-        private static async Task Checkmark(SocketMessage message)
+        public static async Task Checkmark(SocketMessage message)
         {
             var obtainedMessage = await message.Channel.GetMessageAsync(message.Id);
             if (obtainedMessage is RestUserMessage rest)
