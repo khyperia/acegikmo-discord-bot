@@ -14,7 +14,8 @@ namespace AcegikmoDiscordBot
 !delgame <game> - removes yourself from the list
 !mygames - lists games you're a part of
 !pinggame <game> - pings everyone who has added themselves to <game> using !addgame
-!games - list all games currently registered in the list of pingable games");
+!games - list all games currently registered in the list of pingable games
+!pronoun <she/her, he/him, they/them, him/her/they> - gives you a pronoun role. run again to remove.");
             }
         }
     }
