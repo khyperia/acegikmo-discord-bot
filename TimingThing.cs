@@ -40,7 +40,7 @@ namespace AcegikmoDiscordBot
         private async Task DoTimer(SocketTextChannel messageChannel)
         {
             var lewdchannel = messageChannel.Guild.GetTextChannel(LEWD_CHANNEL);
-            await lewdchannel.SendMessageAsync("Please make sure you've read the topic of this channel, as this channel is \uE11D*spicy*\uE11D and it's *important*.");
+            await lewdchannel.SendMessageAsync("Please make sure you've read the topic of this channel, as this channel is \U0001F525*spicy*\U0001F525 and it's *important*.");
             SetNextUpdate();
             var modchannel = messageChannel.Guild.GetTextChannel(Config.channel);
             await MemberizerCommand.Memberizer(_log, modchannel, 50);
