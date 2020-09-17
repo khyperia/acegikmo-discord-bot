@@ -33,8 +33,9 @@ namespace AcegikmoDiscordBot
         {
             if (message.Content.StartsWith("!addgame "))
             {
-                var game = message.Content.Substring("!addgame ".Length).ToLower();
-                await AddGame(message, game);
+	            // For some reason the Discord library made the mention sanitizer internal :c but this nbsp is what they do
+	            var game = message.Content.Substring("!addgame ".Length).ToLower().Replace("@", "@\u200B");
+	            await AddGame(message, game);
             }
             if (message.Content.StartsWith("!delgame "))
             {
