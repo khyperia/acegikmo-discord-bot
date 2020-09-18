@@ -44,7 +44,7 @@ namespace AcegikmoDiscordBot
             }
             if (message.Content.StartsWith("!pinggame "))
             {
-                var game = message.Content.Substring("!pinggame ".Length).ToLower();
+                var game = message.Content.Substring("!pinggame ".Length).ToLower().Replace("@", "@\u200B");
                 await PingGame(message, game);
             }
             if (message.Content == "!games")
@@ -57,17 +57,17 @@ namespace AcegikmoDiscordBot
             }
             if (message.Author.Id == ASHL && message.Content.StartsWith("!nukegame "))
             {
-                var game = message.Content.Substring("!nukegame ".Length);
+                var game = message.Content.Substring("!nukegame ".Length).Replace("@", "@\u200B");
                 await NukeGame(message, game);
             }
             if (message.Author.Id == ASHL && message.Content.StartsWith("!addusergame "))
             {
-                var cmd = message.Content.Substring("!addusergame ".Length);
+                var cmd = message.Content.Substring("!addusergame ".Length).Replace("@", "@\u200B");
                 await AddUserGame(message, cmd);
             }
             if (message.Author.Id == ASHL && message.Content.StartsWith("!delusergame "))
             {
-                var cmd = message.Content.Substring("!delusergame ".Length);
+                var cmd = message.Content.Substring("!delusergame ".Length).Replace("@", "@\u200B");
                 await DelUserGame(message, cmd);
             }
         }
