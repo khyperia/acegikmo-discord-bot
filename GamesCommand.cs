@@ -79,7 +79,7 @@ namespace AcegikmoDiscordBot
             }
             if (list.Contains(message.Author.Id))
             {
-                await message.Channel.SendMessageAsync($"You're already in {game}");
+                await message.Channel.SendMessageAsync($"You're already in {game.Replace("@", "@\u200B")}");
             }
             else
             {
@@ -93,7 +93,7 @@ namespace AcegikmoDiscordBot
         {
             if (!GameDict.TryGetValue(game, out var list) || !list.Remove(message.Author.Id))
             {
-                await message.Channel.SendMessageAsync($"You are not in the list for {game}");
+                await message.Channel.SendMessageAsync($"You are not in the list for {game.Replace("@", "@\u200B")}");
             }
             else
             {
@@ -110,28 +110,28 @@ namespace AcegikmoDiscordBot
         {
             if (!GameDict.TryGetValue(game, out var list))
             {
-                await message.Channel.SendMessageAsync($"Nobody's in the list for {game}.");
+                await message.Channel.SendMessageAsync($"Nobody's in the list for {game.Replace("@", "@\u200B")}.");
             }
             else if (!list.Contains(message.Author.Id))
             {
-                await message.Channel.SendMessageAsync($"You are not in the list for {game}, so you can't ping it.");
+                await message.Channel.SendMessageAsync($"You are not in the list for {game.Replace("@", "@\u200B")}, so you can't ping it.");
             }
             else if (list.Count == 1)
             {
-                await message.Channel.SendMessageAsync($"You're the only one registered for {game}, sorry :c");
+                await message.Channel.SendMessageAsync($"You're the only one registered for {game.Replace("@", "@\u200B")}, sorry :c");
             }
             else
             {
-                await message.Channel.SendMessageAsync($"{message.Author.Mention} wants to play {game}! {string.Join(", ", list.Where(id => id != message.Author.Id).Select(MentionUtils.MentionUser))}");
+                await message.Channel.SendMessageAsync($"{message.Author.Mention} wants to play {game.Replace("@", "@\u200B")}! {string.Join(", ", list.Where(id => id != message.Author.Id).Select(MentionUtils.MentionUser))}");
             }
         }
 
         private Task ListGames(SocketMessage message) =>
-             message.Channel.SendMessageAsync($"All pingable games (and number of people): {string.Join(", ", GameDict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key} ({kvp.Value.Count})"))}");
+             message.Channel.SendMessageAsync($"All pingable games (and number of people): {string.Join(", ", GameDict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key.Replace("@", "@\u200B")} ({kvp.Value.Count})"))}");
 
         private async Task MyGames(SocketMessage message)
         {
-            var result = string.Join(", ", GameDict.Where(kvp => kvp.Value.Contains(message.Author.Id)).Select(kvp => kvp.Key).OrderBy(x => x));
+            var result = string.Join(", ", GameDict.Where(kvp => kvp.Value.Contains(message.Author.Id)).Select(kvp => kvp.Key.Replace("@", "@\u200B")).OrderBy(x => x));
             if (string.IsNullOrEmpty(result))
             {
                 await message.Channel.SendMessageAsync($"You're not in any games list");
