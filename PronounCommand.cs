@@ -17,14 +17,14 @@ namespace AcegikmoDiscordBot
         {
             if (message.Content == "!pronoun" &&
                 message.Channel is SocketTextChannel ch &&
-                ch.Guild.Id == Config.server)
+                ch.Guild.Id == ACEGIKMO_SERVER)
             {
                 await message.Channel.SendMessageAsync("Available pronouns: she/her, he/him, they/them, him/her/they. Example:\n!pronoun she/her");
             }
             if (message.Content.StartsWith("!pronoun ") &&
                 message.Author is IGuildUser author &&
                 message.Channel is SocketTextChannel channel &&
-                channel.Guild.Id == Config.server)
+                channel.Guild.Id == ACEGIKMO_SERVER)
             {
                 var role = message.Content.Substring("!pronoun ".Length).ToLower();
                 ulong? idNull = role switch

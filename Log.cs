@@ -120,6 +120,10 @@ namespace AcegikmoDiscordBot
 
         private void LogMessage(SocketMessage message)
         {
+            if (!(message.Channel is SocketGuildChannel chan) || chan.Guild.Id != ACEGIKMO_SERVER)
+            {
+                return;
+            }
             var content = Format(message);
             if (content == "" && message.Author.Id == 0)
             {

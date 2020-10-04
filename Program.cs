@@ -16,12 +16,6 @@ namespace AcegikmoDiscordBot
     {
         [DataMember]
         internal string token;
-
-        [DataMember]
-        internal ulong server;
-
-        [DataMember]
-        internal ulong channel;
     }
 #pragma warning restore CS0649
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
@@ -30,6 +24,8 @@ namespace AcegikmoDiscordBot
     internal class Program : IDisposable
     {
         public static ulong ASHL = 139525105846976512UL;
+        public static ulong ACEGIKMO_SERVER = 422202998610198528UL;
+        public static ulong ACEGIKMO_DELETED_MESSAGES = 612767753031647240UL;
 
         private readonly Log _log;
         public static readonly ConfigClass Config = GetConfig();

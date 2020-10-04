@@ -27,11 +27,11 @@ namespace AcegikmoDiscordBot
 
         public async Task MessageReceivedAsync(SocketMessage message)
         {
-            if (DateTime.UtcNow > _nextUpdate && message.Channel is SocketTextChannel messageChannel && messageChannel.Guild.Id == Config.server)
+            if (DateTime.UtcNow > _nextUpdate && message.Channel is SocketTextChannel messageChannel && messageChannel.Guild.Id == ACEGIKMO_SERVER)
             {
                 await DoTimer(messageChannel);
             }
-            else if (message.Author.Id == ASHL && message.Content == "!dotimer" && message.Channel is SocketTextChannel messageChannel2 && messageChannel2.Guild.Id == Config.server)
+            else if (message.Author.Id == ASHL && message.Content == "!dotimer" && message.Channel is SocketTextChannel messageChannel2 && messageChannel2.Guild.Id == ACEGIKMO_SERVER)
             {
                 await DoTimer(messageChannel2);
             }
@@ -42,7 +42,7 @@ namespace AcegikmoDiscordBot
             var lewdchannel = messageChannel.Guild.GetTextChannel(LEWD_CHANNEL);
             await lewdchannel.SendMessageAsync("Please make sure you've read the topic of this channel, as this channel is \U0001F525*spicy*\U0001F525 and it's *important*.");
             SetNextUpdate();
-            var modchannel = messageChannel.Guild.GetTextChannel(Config.channel);
+            var modchannel = messageChannel.Guild.GetTextChannel(ACEGIKMO_DELETED_MESSAGES);
             await MemberizerCommand.Memberizer(_log, modchannel, 50);
             Console.WriteLine("Trimming...");
             _log.Trim();
@@ -79,7 +79,9 @@ namespace AcegikmoDiscordBot
                     foreach (var item in collection)
                     {
                         if (item.CreatedAt < timeLimit)
+                        {
                             yield return item.Id;
+                        }
                         youngest = Math.Min(youngest, item.Id);
                     }
                 }
