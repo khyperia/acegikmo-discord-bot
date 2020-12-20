@@ -158,8 +158,18 @@ namespace AcegikmoDiscordBot
             }
         }
 
-        private Task ListGames(SocketMessage message) =>
-             message.Channel.SendMessageAsync($"All pingable games (and number of people): {string.Join(", ", GameDict(message).OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key.Replace("@", "@\u200B")} ({kvp.Value.Count})"))}");
+        private async Task ListGames(SocketMessage message)
+        {
+            var msg = $"All pingable games (and number of people): {string.Join(", ", GameDict(message).OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key.Replace("@", "@\u200B")} ({kvp.Value.Count})"))}";
+            var maxLength = 2000;
+            while (msg.Length > 2000)
+            {
+                var slice = msg.Substring(0, maxLength);
+                await message.Channel.SendMessageAsync(slice);
+                msg = msg.Substring(maxLength);
+            }
+            await message.Channel.SendMessageAsync(msg);
+        }
 
         private async Task MyGames(SocketMessage message)
         {
