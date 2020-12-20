@@ -192,9 +192,11 @@ namespace AcegikmoDiscordBot
             {
                 return;
             }
-            gameDict.Remove(game);
-            SaveDict();
-            await Checkmark(message);
+            if (gameDict.Remove(game))
+            {
+                SaveDict();
+                await Checkmark(message);
+            }
         }
 
         private async Task AddUserGame(SocketMessage message, string cmd)
