@@ -74,7 +74,7 @@ namespace AcegikmoDiscordBot
             }
             if (message.Author.Id == ASHL && message.Content.StartsWith("!nukegame "))
             {
-                var game = message.Content.Substring("!nukegame ".Length);
+                var game = message.Content.Substring("!nukegame ".Length).ToLower();
                 await NukeGame(message, game);
             }
             if (message.Author.Id == ASHL && message.Content.StartsWith("!addusergame "))
@@ -222,9 +222,10 @@ namespace AcegikmoDiscordBot
             }
             else
             {
-                if (!gameDict.TryGetValue(thing[1], out var list))
+                var game = thing[1].ToLower();
+                if (!gameDict.TryGetValue(game, out var list))
                 {
-                    list = gameDict[thing[1]] = new List<ulong>();
+                    list = gameDict[game] = new List<ulong>();
                 }
                 if (list.Contains(id))
                 {
@@ -250,10 +251,12 @@ namespace AcegikmoDiscordBot
             if (thing.Length != 2)
             {
                 await message.Channel.SendMessageAsync("!delusergame id game");
+                return;
             }
-            else if (!gameDict.TryGetValue(thing[1], out var list))
+            var game = thing[1].ToLower();
+            if (!gameDict.TryGetValue(game, out var list))
             {
-                await message.Channel.SendMessageAsync($"game not found: {HttpUtility.JavaScriptStringEncode(thing[1], true)}");
+                await message.Channel.SendMessageAsync($"game not found: {HttpUtility.JavaScriptStringEncode(game, true)}");
             }
             else if (!TryParseId(thing[0], out var id))
             {
@@ -267,7 +270,7 @@ namespace AcegikmoDiscordBot
             {
                 if (list.Count == 0)
                 {
-                    gameDict.Remove(thing[1]);
+                    gameDict.Remove(game);
                 }
                 SaveDict();
                 await Checkmark(message);
