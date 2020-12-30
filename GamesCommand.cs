@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using static AcegikmoDiscordBot.Program;
 
 namespace AcegikmoDiscordBot
@@ -197,6 +198,10 @@ namespace AcegikmoDiscordBot
                 SaveDict();
                 await Checkmark(message);
             }
+            else
+            {
+                await message.Channel.SendMessageAsync($"game not found: {HttpUtility.JavaScriptStringEncode(game, true)}");
+            }
         }
 
         private async Task AddUserGame(SocketMessage message, string cmd)
@@ -248,7 +253,7 @@ namespace AcegikmoDiscordBot
             }
             else if (!gameDict.TryGetValue(thing[1], out var list))
             {
-                await message.Channel.SendMessageAsync("game not found");
+                await message.Channel.SendMessageAsync($"game not found: {HttpUtility.JavaScriptStringEncode(thing[1], true)}");
             }
             else if (!TryParseId(thing[0], out var id))
             {
