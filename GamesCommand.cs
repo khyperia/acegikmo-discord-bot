@@ -47,6 +47,19 @@ namespace AcegikmoDiscordBot
             }
         }
 
+        public static async Task CrossReact(SocketMessage message)
+        {
+            var obtainedMessage = await message.Channel.GetMessageAsync(message.Id);
+            if (obtainedMessage is RestUserMessage rest)
+            {
+                await rest.AddReactionAsync(new Emoji("\u274c"));
+            }
+            else
+            {
+                await message.Channel.SendMessageAsync("\u274c");
+            }
+        }
+
         public async Task MessageReceivedAsync(SocketMessage message)
         {
             if (message.Content.StartsWith("!addgame "))

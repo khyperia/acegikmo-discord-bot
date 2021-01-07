@@ -41,7 +41,7 @@ namespace AcegikmoDiscordBot
                     if (author.RoleIds.Contains(id))
                     {
                         await author.RemoveRoleAsync(channel.Guild.GetRole(id));
-                        await GamesCommand.Checkmark(message);
+                        await GamesCommand.CrossReact(message);
                     }
                     else
                     {
