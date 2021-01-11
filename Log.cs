@@ -177,7 +177,7 @@ namespace AcegikmoDiscordBot
         public IEnumerable<(ulong authorId, ulong count)> MessageCounts(IEnumerable<ulong> userIds, ulong limit)
         {
             using var cmd = _sql.CreateCommand();
-            cmd.CommandText = $"SELECT author_id, COUNT(*) as message_count FROM log WHERE author_id IN ({string.Join(",", userIds)}) GROUP BY author_id ORDER BY message_count DESC";
+            cmd.CommandText = $"SELECT author_id, COUNT(*) as message_count FROM log WHERE author_id IN ({string.Join(",", userIds)}) GROUP BY author_id HAVING COUNT(*) > {limit} ORDER BY message_count DESC";
             var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -195,8 +195,7 @@ namespace AcegikmoDiscordBot
                             break;
                     }
                 }
-                // TODO: Move the count filter inside query
-                if (author != 0 && count >= limit)
+                if (author != 0 && count != 0)
                 {
                     yield return (author, count);
                 }
