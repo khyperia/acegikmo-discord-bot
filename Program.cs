@@ -49,6 +49,11 @@ namespace AcegikmoDiscordBot
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 ExclusiveBulkDelete = true,
+                GatewayIntents =
+                    GatewayIntents.Guilds |
+                    GatewayIntents.GuildMembers |
+                    GatewayIntents.GuildMessages |
+                    GatewayIntents.GuildMessageReactions,
             });
             _log = new Log();
             Console.CancelKeyPress += (sender, args) => Dispose();
