@@ -26,7 +26,7 @@ namespace AcegikmoDiscordBot
 
             monitor.OnStreamOnline += Monitor_OnStreamOnline;
             monitor.OnStreamOffline += Monitor_OnStreamOffline;
-            monitor.OnStreamUpdate += Monitor_OnStreamUpdate;
+            // monitor.OnStreamUpdate += Monitor_OnStreamUpdate;
 
             monitor.OnServiceStarted += Monitor_OnServiceStarted;
             monitor.OnChannelsSet += Monitor_OnChannelsSet;
@@ -58,10 +58,10 @@ namespace AcegikmoDiscordBot
             }
         }
 
-        private void Monitor_OnStreamUpdate(object? sender, OnStreamUpdateArgs e)
-        {
-            Send($"Stream update: channel = {e.Channel} title = {e.Stream.Title} type = {e.Stream.Type}");
-        }
+        // private void Monitor_OnStreamUpdate(object? sender, OnStreamUpdateArgs e)
+        // {
+        //     Send($"Stream update: channel = {e.Channel} title = {e.Stream.Title} type = {e.Stream.Type}");
+        // }
 
         private void Monitor_OnStreamOffline(object? sender, OnStreamOfflineArgs e)
         {
