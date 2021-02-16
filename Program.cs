@@ -16,6 +16,12 @@ namespace AcegikmoDiscordBot
     {
         [DataMember]
         internal string token;
+
+        [DataMember]
+        internal string twitchclientid;
+
+        [DataMember]
+        internal string twitchsecret;
     }
 #pragma warning restore CS0649
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
@@ -71,6 +77,7 @@ namespace AcegikmoDiscordBot
             _client.MessageReceived += new TimingThing(_log).MessageReceivedAsync;
             _client.MessageReceived += _log.MessageReceivedAsync;
             _client.MessageUpdated += _log.MessageUpdatedAsync;
+            new TwitchWatcher(_client);
 
             await _client.LoginAsync(TokenType.Bot, Config.token);
             await _client.StartAsync();
