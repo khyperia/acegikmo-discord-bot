@@ -15,7 +15,7 @@ namespace AcegikmoDiscordBot
             try
             {
                 using var stream = File.OpenRead(jsonFile);
-                Data = (T)Serializer.ReadObject(stream);
+                Data = (T)(Serializer.ReadObject(stream) ?? throw new Exception($"Deserialization of {jsonFile} failed"));
             }
             catch (FileNotFoundException)
             {

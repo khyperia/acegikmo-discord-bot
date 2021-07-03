@@ -100,6 +100,11 @@ namespace AcegikmoDiscordBot
                 var cmd = message.Content.Substring("!delusergame ".Length);
                 await DelUserGame(message, cmd);
             }
+            if (message.Author.Id == ASHL && message.Content == "!downloadusers" && message.Channel is SocketGuildChannel chan)
+            {
+                await chan.Guild.DownloadUsersAsync();
+                await message.Channel.SendMessageAsync($"mc={chan.Guild.MemberCount} dmc={chan.Guild.DownloadedMemberCount} count={chan.Users.Count} ham={chan.Guild.HasAllMembers}");
+            }
         }
 
         private async Task AddGame(SocketMessage message, string game)
@@ -174,7 +179,12 @@ namespace AcegikmoDiscordBot
 
         private async Task ListGames(SocketMessage message)
         {
-            var msg = $"All pingable games (and number of people): {string.Join(", ", GameDict(message).OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key.Replace("@", "@\u200B")} ({kvp.Value.Count})"))}";
+            var gameDict = GameDict(message);
+            if (gameDict == null)
+            {
+                return;
+            }
+            var msg = $"All pingable games (and number of people): {string.Join(", ", gameDict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key.Replace("@", "@\u200B")} ({kvp.Value.Count})"))}";
             var maxLength = 2000;
             while (msg.Length > 2000)
             {
@@ -188,6 +198,10 @@ namespace AcegikmoDiscordBot
         private async Task MyGames(SocketMessage message)
         {
             var gameDict = GameDict(message);
+            if (gameDict == null)
+            {
+                return;
+            }
             var result = string.Join(", ", gameDict.Where(kvp => kvp.Value.Contains(message.Author.Id)).Select(kvp => kvp.Key.Replace("@", "@\u200B")).OrderBy(x => x));
             if (string.IsNullOrEmpty(result))
             {

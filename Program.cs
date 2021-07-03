@@ -35,7 +35,7 @@ namespace AcegikmoDiscordBot
         {
             using var stream = File.OpenRead("config.json");
             var json = new DataContractJsonSerializer(typeof(ConfigClass));
-            return (ConfigClass)json.ReadObject(stream);
+            return (ConfigClass)(json.ReadObject(stream) ?? throw new Exception("Deserialization of config.json failed"));
         }
 
         private static async Task Main()
