@@ -12,6 +12,7 @@ namespace AcegikmoDiscordBot
         private static readonly ulong HeHim = 506469615841443840U;
         private static readonly ulong TheyThem = 506469646602600459U;
         private static readonly ulong HimHerThey = 583033959378583562U;
+        private static readonly ulong FaeFaer = 881143654973075477U;
 
         public async Task MessageReceivedAsync(SocketMessage message)
         {
@@ -19,7 +20,7 @@ namespace AcegikmoDiscordBot
                 message.Channel is SocketTextChannel ch &&
                 ch.Guild.Id == ACEGIKMO_SERVER)
             {
-                await message.Channel.SendMessageAsync("Available pronouns: she/her, he/him, they/them, him/her/they. Example:\n!pronoun she/her");
+                await message.Channel.SendMessageAsync("Available pronouns: she/her, he/him, they/them, him/her/they, fae/faer. Example:\n!pronoun she/her");
             }
             if (message.Content.StartsWith("!pronoun ") &&
                 message.Author is IGuildUser author &&
@@ -33,6 +34,7 @@ namespace AcegikmoDiscordBot
                     "he/him" => HeHim,
                     "they/them" => TheyThem,
                     "him/her/they" => HimHerThey,
+                    "fae/faer" => FaeFaer,
                     _ => null,
                 };
                 if (idNull != null)
