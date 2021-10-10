@@ -11,12 +11,12 @@ namespace AcegikmoDiscordBot
 {
     internal class GamesCommand
     {
-        private readonly Json<Dictionary<ulong, Dictionary<string, List<ulong>>>> _json = new Json<Dictionary<ulong, Dictionary<string, List<ulong>>>>("games.json");
+        private readonly Json<Dictionary<ulong, Dictionary<string, List<ulong>>>> _json = new("games.json");
 
         private Dictionary<ulong, Dictionary<string, List<ulong>>> AllGameDicts => _json.Data;
         private Dictionary<string, List<ulong>>? GameDict(SocketMessage message)
         {
-            if (!(message.Channel is SocketGuildChannel chan))
+            if (message.Channel is not SocketGuildChannel chan)
             {
                 return null;
             }
@@ -64,17 +64,17 @@ namespace AcegikmoDiscordBot
         {
             if (message.Content.StartsWith("!addgame "))
             {
-                var game = message.Content.Substring("!addgame ".Length).ToLower();
+                var game = message.Content["!addgame ".Length..].ToLower();
                 await AddGame(message, game);
             }
             if (message.Content.StartsWith("!delgame "))
             {
-                var game = message.Content.Substring("!delgame ".Length).ToLower();
+                var game = message.Content["!delgame ".Length..].ToLower();
                 await DelGame(message, game);
             }
             if (message.Content.StartsWith("!pinggame "))
             {
-                var game = message.Content.Substring("!pinggame ".Length).ToLower();
+                var game = message.Content["!pinggame ".Length..].ToLower();
                 await PingGame(message, game);
             }
             if (message.Content == "!games")
@@ -87,17 +87,22 @@ namespace AcegikmoDiscordBot
             }
             if (message.Author.Id == ASHL && message.Content.StartsWith("!nukegame "))
             {
-                var game = message.Content.Substring("!nukegame ".Length).ToLower();
+                var game = message.Content["!nukegame ".Length..].ToLower();
                 await NukeGame(message, game);
+            }
+            if (message.Author.Id == ASHL && message.Content.StartsWith("!nukeuser "))
+            {
+                var cmd = message.Content["!nukeuser ".Length..].ToLower();
+                await NukeUser(message, cmd);
             }
             if (message.Author.Id == ASHL && message.Content.StartsWith("!addusergame "))
             {
-                var cmd = message.Content.Substring("!addusergame ".Length);
+                var cmd = message.Content["!addusergame ".Length..];
                 await AddUserGame(message, cmd);
             }
             if (message.Author.Id == ASHL && message.Content.StartsWith("!delusergame "))
             {
-                var cmd = message.Content.Substring("!delusergame ".Length);
+                var cmd = message.Content["!delusergame ".Length..];
                 await DelUserGame(message, cmd);
             }
             if (message.Author.Id == ASHL && message.Content == "!downloadusers" && message.Channel is SocketGuildChannel chan)
@@ -190,7 +195,7 @@ namespace AcegikmoDiscordBot
             {
                 var slice = msg.Substring(0, maxLength);
                 await message.Channel.SendMessageAsync(slice);
-                msg = msg.Substring(maxLength);
+                msg = msg[maxLength..];
             }
             await message.Channel.SendMessageAsync(msg);
         }
@@ -228,6 +233,52 @@ namespace AcegikmoDiscordBot
             else
             {
                 await message.Channel.SendMessageAsync($"game not found: {HttpUtility.JavaScriptStringEncode(game, true)}");
+            }
+        }
+
+        private async Task NukeUser(SocketMessage message, string cmd)
+        {
+            var gameDict = GameDict(message);
+            if (gameDict == null)
+            {
+                return;
+            }
+            if (!TryParseId(cmd, out var id))
+            {
+                await message.Channel.SendMessageAsync("bad user ID");
+            }
+            else
+            {
+                var changed = false;
+                List<string>? emptyKeys = null;
+                foreach (var kvp in gameDict)
+                {
+                    changed |= kvp.Value.Remove(id);
+                    if (kvp.Value.Count == 0)
+                    {
+                        if (emptyKeys == null)
+                        {
+                            emptyKeys = new List<string>();
+                        }
+                        emptyKeys.Add(kvp.Key);
+                    }
+                }
+                if (!changed)
+                {
+                    await message.Channel.SendMessageAsync("user not found");
+                }
+                else
+                {
+                    if (emptyKeys != null)
+                    {
+                        foreach (var emptyKey in emptyKeys)
+                        {
+                            gameDict.Remove(emptyKey);
+                        }
+                    }
+                    SaveDict();
+                    await Checkmark(message);
+                }
             }
         }
 
@@ -304,7 +355,7 @@ namespace AcegikmoDiscordBot
             }
         }
 
-        private bool TryParseId(string s, out ulong id) => ulong.TryParse(s, out id) ||
+        private static bool TryParseId(string s, out ulong id) => ulong.TryParse(s, out id) ||
                 (s.StartsWith($"<@") && s.EndsWith(">") && ulong.TryParse(s[2..^1], out id)) ||
                 (s.StartsWith($"<@!") && s.EndsWith(">") && ulong.TryParse(s[3..^1], out id));
     }

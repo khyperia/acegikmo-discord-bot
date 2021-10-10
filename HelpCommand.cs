@@ -5,7 +5,7 @@ namespace AcegikmoDiscordBot
 {
     internal class HelpCommand
     {
-        public async Task MessageReceivedAsync(SocketMessage message)
+        public static async Task MessageReceivedAsync(SocketMessage message)
         {
             if (message.Content == "!help")
             {

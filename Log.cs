@@ -76,7 +76,7 @@ namespace AcegikmoDiscordBot
             if (message.Author.Id == ASHL &&
                 message.Content.StartsWith("!sql "))
             {
-                var thing = message.Content.Substring("!sql ".Length);
+                var thing = message.Content["!sql ".Length..];
                 var scaryCmd = _sql.CreateCommand();
                 scaryCmd.CommandText = thing; // spook
                 using var scaryResult = scaryCmd.ExecuteReader();
@@ -120,7 +120,7 @@ namespace AcegikmoDiscordBot
 
         private void LogMessage(SocketMessage message)
         {
-            if (!(message.Channel is SocketGuildChannel chan) || chan.Guild.Id != ACEGIKMO_SERVER)
+            if (message.Channel is not SocketGuildChannel chan || chan.Guild.Id != ACEGIKMO_SERVER)
             {
                 return;
             }
@@ -202,7 +202,7 @@ namespace AcegikmoDiscordBot
             }
         }
 
-        private string Format(SocketMessage message)
+        private static string Format(SocketMessage message)
         {
             var result = string.IsNullOrWhiteSpace(message.Content) ? "" : message.Content;
             if (message.Attachments != null && !(message.Attachments is ImmutableArray<Attachment> array && array.IsDefault))

@@ -6,7 +6,7 @@ namespace AcegikmoDiscordBot
 {
     internal class Json<T> where T : new()
     {
-        private static readonly DataContractJsonSerializer Serializer = new DataContractJsonSerializer(typeof(T), new DataContractJsonSerializerSettings() { UseSimpleDictionaryFormat = true });
+        private static readonly DataContractJsonSerializer Serializer = new(typeof(T), new DataContractJsonSerializerSettings() { UseSimpleDictionaryFormat = true });
         private readonly string _jsonFile;
         public T Data { get; }
 

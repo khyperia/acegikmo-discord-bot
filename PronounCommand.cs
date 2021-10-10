@@ -14,7 +14,7 @@ namespace AcegikmoDiscordBot
         private static readonly ulong HimHerThey = 583033959378583562U;
         private static readonly ulong FaeFaer = 881143654973075477U;
 
-        public async Task MessageReceivedAsync(SocketMessage message)
+        public static async Task MessageReceivedAsync(SocketMessage message)
         {
             if (message.Content == "!pronoun" &&
                 message.Channel is SocketTextChannel ch &&
@@ -27,7 +27,7 @@ namespace AcegikmoDiscordBot
                 message.Channel is SocketTextChannel channel &&
                 channel.Guild.Id == ACEGIKMO_SERVER)
             {
-                var role = message.Content.Substring("!pronoun ".Length).ToLower();
+                var role = message.Content["!pronoun ".Length..].ToLower();
                 ulong? idNull = role switch
                 {
                     "she/her" => SheHer,

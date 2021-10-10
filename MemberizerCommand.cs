@@ -34,7 +34,7 @@ namespace AcegikmoDiscordBot
         {
             if (message.Author.Id == ASHL &&
                 message.Content.StartsWith("!memberizer ") &&
-                ulong.TryParse(message.Content.Substring("!memberizer ".Length), out var desiredCount) &&
+                ulong.TryParse(message.Content["!memberizer ".Length..], out var desiredCount) &&
                 message.Channel is SocketTextChannel channel)
             {
                 await Memberizer(_log, channel, desiredCount);

@@ -63,10 +63,10 @@ namespace AcegikmoDiscordBot
         {
             _client.Log += a => { Console.WriteLine(a); return Task.CompletedTask; };
             _client.MessageDeleted += new DeleteEcho(_log).MessageDeletedAsync;
-            _client.MessageReceived += new EchoCommand().MessageReceivedAsync;
+            _client.MessageReceived += EchoCommand.MessageReceivedAsync;
             _client.MessageReceived += new GamesCommand().MessageReceivedAsync;
-            _client.MessageReceived += new HelpCommand().MessageReceivedAsync;
-            _client.MessageReceived += new PronounCommand().MessageReceivedAsync;
+            _client.MessageReceived += HelpCommand.MessageReceivedAsync;
+            _client.MessageReceived += PronounCommand.MessageReceivedAsync;
             _client.MessageReceived += new MemberizerCommand(_log).MessageReceivedAsync;
             _client.MessageReceived += new TimingThing(_log).MessageReceivedAsync;
             _client.MessageReceived += _log.MessageReceivedAsync;
