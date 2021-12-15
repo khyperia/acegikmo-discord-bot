@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Remora.Discord.Gateway;
 using Remora.Discord.Gateway.Extensions;
+using Remora.Rest.Core;
 
 namespace AcegikmoDiscordBot
 {
@@ -25,9 +26,9 @@ namespace AcegikmoDiscordBot
 
     internal class Program
     {
-        public static ulong ASHL = 189120139797594112UL;
-        public static ulong ACEGIKMO_SERVER = 920697136864174100UL;
-        public static ulong ACEGIKMO_DELETED_MESSAGES = 920699605858021406UL;
+        public static Snowflake ASHL = new(189120139797594112UL);
+        public static Snowflake ACEGIKMO_SERVER = new(920697136864174100UL);
+        public static Snowflake ACEGIKMO_DELETED_MESSAGES = new(920699605858021406UL);
 
         public static readonly ConfigClass Config = GetConfig();
         private readonly DiscordGatewayClient _client;

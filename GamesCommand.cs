@@ -68,27 +68,27 @@ namespace AcegikmoDiscordBot
             {
                 await MyGames(message);
             }
-            if (message.Author.ID.Value == ASHL && message.Content.StartsWith("!nukegame "))
+            if (message.Author.IsAshl() && message.Content.StartsWith("!nukegame "))
             {
                 var game = message.Content["!nukegame ".Length..].ToLower();
                 await NukeGame(message, game);
             }
-            if (message.Author.ID.Value == ASHL && message.Content.StartsWith("!nukeuser "))
+            if (message.Author.IsAshl() && message.Content.StartsWith("!nukeuser "))
             {
                 var cmd = message.Content["!nukeuser ".Length..].ToLower();
                 await NukeUser(message, cmd);
             }
-            if (message.Author.ID.Value == ASHL && message.Content.StartsWith("!addusergame "))
+            if (message.Author.IsAshl() && message.Content.StartsWith("!addusergame "))
             {
                 var cmd = message.Content["!addusergame ".Length..];
                 await AddUserGame(message, cmd);
             }
-            if (message.Author.ID.Value == ASHL && message.Content.StartsWith("!delusergame "))
+            if (message.Author.IsAshl() && message.Content.StartsWith("!delusergame "))
             {
                 var cmd = message.Content["!delusergame ".Length..];
                 await DelUserGame(message, cmd);
             }
-            if (message.Author.ID.Value == ASHL && message.Content == "!downloadusers" && message.GuildID.HasValue) {
+            if (message.Author.IsAshl() && message.Content == "!downloadusers" && message.GuildID.HasValue) {
                 var getGuild = await _guildAPI.GetGuildAsync(message.GuildID.Value, true);
                 if(!getGuild.IsSuccess) return Result.FromError(getGuild.Error);
                 var guild = getGuild.Entity;

@@ -30,12 +30,11 @@ namespace AcegikmoDiscordBot
 
         public async Task<Result> RespondAsync(IMessageCreate message, CancellationToken ct = new())
         {
-            if (message.Content == "!pronoun" && message.GuildID.Value.Value == ACEGIKMO_SERVER) {
+            if (message.Content == "!pronoun" && message.GuildID.IsAcegikmo()) {
                 await _channelApi.CreateMessageAsync(message.ChannelID,
                     "Available pronouns: she/her, he/him, they/them, him/her/they, fae/faer. Example:\n!pronoun she/her");
             }
-            if (message.Content.StartsWith("!pronoun ") &&
-                message.GuildID.Value.Value == ACEGIKMO_SERVER)
+            if (message.Content.StartsWith("!pronoun ") && message.GuildID.IsAcegikmo())
             {
                 var role = message.Content["!pronoun ".Length..].ToLower();
                 ulong? idNull = role switch

@@ -18,7 +18,7 @@ namespace AcegikmoDiscordBot
         }
         public async Task<Result> RespondAsync(IMessageCreate message, CancellationToken ct = new CancellationToken()) {
             
-            if (message.Author.ID.Value == ASHL && message.Content.StartsWith("!echo "))
+            if (message.Author.IsAshl() && message.Content.StartsWith("!echo "))
             {
                 var msg = message.Content["!echo ".Length..].Trim('`');
                 await _channelAPI.CreateMessageAsync(message.ChannelID, msg, ct: ct);

@@ -75,7 +75,7 @@ namespace AcegikmoDiscordBot {
         }
 
         public async Task<Result> RespondAsync(IMessageCreate message, CancellationToken ct = new()) {
-            if (message.Author.ID.Value == ASHL && message.Content.StartsWith("!sql ")) {
+            if (message.Author.IsAshl() && message.Content.StartsWith("!sql ")) {
                 var thing = message.Content["!sql ".Length..];
                 var scaryCmd = _sql.CreateCommand();
                 scaryCmd.CommandText = thing; // spook
@@ -119,7 +119,7 @@ namespace AcegikmoDiscordBot {
         }
 
         private async Task LogMessage(IPartialMessage message) {
-            if (message.GuildID.Value.Value != ACEGIKMO_SERVER) {
+            if (message.GuildID.IsAcegikmo()) {
                 return;
             }
 

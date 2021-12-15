@@ -36,10 +36,10 @@ namespace AcegikmoDiscordBot
         }
 
         public async Task<Result> RespondAsync(IMessageCreate message, CancellationToken ct = new()) {
-            if (DateTime.UtcNow > _nextUpdate && message.GuildID.HasValue && message.GuildID.Value.Value == ACEGIKMO_SERVER) {
+            if (DateTime.UtcNow > _nextUpdate && message.GuildID.HasValue && message.GuildID.IsAcegikmo()) {
                 await DoTimer();
             }
-            else if (message.Author.ID.Value == ASHL && message.Content == "!dotimer" && message.GuildID.Value.Value == ACEGIKMO_SERVER) {
+            else if (message.Author.IsAshl() && message.Content == "!dotimer" && message.GuildID.IsAcegikmo()) {
                 await DoTimer();
             }
             return Result.FromSuccess();
@@ -50,8 +50,8 @@ namespace AcegikmoDiscordBot
             var lewdchannel = new Snowflake(LEWD_CHANNEL);
             await _channelAPI.CreateMessageAsync(lewdchannel, "Please make sure you've read the topic of this channel, as this channel is \U0001F525*spicy*\U0001F525 and it's *important*.");
             SetNextUpdate();
-            var modchannel = new Snowflake(ACEGIKMO_DELETED_MESSAGES);
-            await _memberizer.Memberizer(_log, modchannel, new Snowflake(ACEGIKMO_SERVER), 50);
+            var modchannel = ACEGIKMO_DELETED_MESSAGES;
+            await _memberizer.Memberizer(_log, modchannel, ACEGIKMO_SERVER, 50);
             Console.WriteLine("Trimming...");
             _log.Trim();
             Console.WriteLine("Done trimming. Starting channel trim.");
