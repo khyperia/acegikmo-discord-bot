@@ -2,9 +2,11 @@ using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
+using System.Threading;
 using System.Threading.Tasks;
-using Discord;
-using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
+using Remora.Discord.Gateway;
+using Remora.Discord.Gateway.Extensions;
 
 namespace AcegikmoDiscordBot
 {
@@ -21,15 +23,14 @@ namespace AcegikmoDiscordBot
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
 #pragma warning restore IDE1006 // Naming Styles
 
-    internal class Program : IDisposable
+    internal class Program
     {
-        public static ulong ASHL = 139525105846976512UL;
-        public static ulong ACEGIKMO_SERVER = 422202998610198528UL;
-        public static ulong ACEGIKMO_DELETED_MESSAGES = 612767753031647240UL;
+        public static ulong ASHL = 189120139797594112UL;
+        public static ulong ACEGIKMO_SERVER = 920697136864174100UL;
+        public static ulong ACEGIKMO_DELETED_MESSAGES = 920699605858021406UL;
 
-        private readonly Log _log;
-        public static readonly ConfigClass Config = GetConfig();
-        private readonly DiscordSocketClient _client;
+        public static readonly ConfigClass Config = new (){ token = "OTIwNjk3MzExMjM4MTc2Nzc4.YboIMA.Ii3AtaygFwddxaVZg9NKe1yi6n0" };// = GetConfig();
+        private readonly DiscordGatewayClient _client;
 
         private static ConfigClass GetConfig()
         {
@@ -40,49 +41,45 @@ namespace AcegikmoDiscordBot
 
         private static async Task Main()
         {
-            using var program = new Program();
+            var program = new Program();
             await program.Run();
         }
 
-        private Program()
-        {
-            _client = new DiscordSocketClient(new DiscordSocketConfig
-            {
-                ExclusiveBulkDelete = true,
-                GatewayIntents =
-                    GatewayIntents.Guilds |
-                    GatewayIntents.GuildMembers |
-                    GatewayIntents.GuildMessages |
-                    GatewayIntents.GuildMessageReactions,
-            });
-            _log = new Log();
-            Console.CancelKeyPress += (sender, args) => Dispose();
+        private Program() {
+            var services = new ServiceCollection()
+                .AddDiscordGateway(_ => Config.token)
+                .AddLogging(Console.WriteLine)
+                .AddResponder<Log>()
+                .AddResponder<HelpCommand>()
+                .AddResponder<EchoCommand>()
+                .AddResponder<DeleteEcho>()
+                .AddResponder<GamesCommand>()
+                .AddResponder<MemberizerCommand>()
+                .AddResponder<TimingThing>()
+                .AddResponder<PronounCommand>()
+                .BuildServiceProvider();
+            _client = services.GetRequiredService<DiscordGatewayClient>();
         }
 
         private async Task Run()
         {
-            _client.Log += a => { Console.WriteLine(a); return Task.CompletedTask; };
-            _client.MessageDeleted += new DeleteEcho(_log).MessageDeletedAsync;
-            _client.MessageReceived += EchoCommand.MessageReceivedAsync;
-            _client.MessageReceived += new GamesCommand().MessageReceivedAsync;
-            _client.MessageReceived += HelpCommand.MessageReceivedAsync;
-            _client.MessageReceived += PronounCommand.MessageReceivedAsync;
-            _client.MessageReceived += new MemberizerCommand(_log).MessageReceivedAsync;
-            _client.MessageReceived += new TimingThing(_log).MessageReceivedAsync;
-            _client.MessageReceived += _log.MessageReceivedAsync;
-            _client.MessageUpdated += _log.MessageUpdatedAsync;
-
-            await _client.LoginAsync(TokenType.Bot, Config.token);
-            await _client.StartAsync();
+            
+            //_client.Log += a => { Console.WriteLine(a); return Task.CompletedTask; };
+            //_client.MessageDeleted += new DeleteEcho(_log).MessageDeletedAsync;
+            //_client.MessageReceived += EchoCommand.MessageReceivedAsync;
+            //_client.MessageReceived += new GamesCommand().MessageReceivedAsync;
+            //_client.MessageReceived += HelpCommand.MessageReceivedAsync;
+            //_client.MessageReceived += PronounCommand.MessageReceivedAsync;
+            //_client.MessageReceived += new MemberizerCommand(_log).MessageReceivedAsync;
+            //_client.MessageReceived += new TimingThing(_log).MessageReceivedAsync;
+            //_client.MessageReceived += _log.MessageReceivedAsync;
+            //_client.MessageUpdated += _log.MessageUpdatedAsync;
+            
+            var res = await _client.RunAsync(CancellationToken.None);
+            if (!res.IsSuccess) throw new Exception(res.Error.Message);
 
             // Block the program until it is closed.
             await Task.Delay(-1);
-        }
-
-        public void Dispose()
-        {
-            _client.Dispose();
-            _log.Dispose();
         }
     }
 }
