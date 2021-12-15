@@ -29,7 +29,7 @@ namespace AcegikmoDiscordBot
         public static ulong ACEGIKMO_SERVER = 920697136864174100UL;
         public static ulong ACEGIKMO_DELETED_MESSAGES = 920699605858021406UL;
 
-        public static readonly ConfigClass Config = new (){ token = "OTIwNjk3MzExMjM4MTc2Nzc4.YboIMA.Ii3AtaygFwddxaVZg9NKe1yi6n0" };// = GetConfig();
+        public static readonly ConfigClass Config = GetConfig();
         private readonly DiscordGatewayClient _client;
 
         private static ConfigClass GetConfig()
