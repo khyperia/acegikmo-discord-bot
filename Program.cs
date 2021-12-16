@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
@@ -65,7 +66,7 @@ namespace AcegikmoDiscordBot
             _client.MessageReceived += games.MessageReceivedAsync;
             _client.SlashCommandExecuted += games.SlashCommandExecuted;
             _client.MessageReceived += HelpCommand.MessageReceivedAsync;
-            _client.MessageReceived += PronounCommand.MessageReceivedAsync;
+            _client.SlashCommandExecuted += PronounCommand.SlashCommandExecuted;
             _client.MessageReceived += new MemberizerCommand(_log).MessageReceivedAsync;
             _client.MessageReceived += new TimingThing(_log).MessageReceivedAsync;
             _client.MessageReceived += _log.MessageReceivedAsync;
@@ -77,7 +78,13 @@ namespace AcegikmoDiscordBot
             _client.Ready += async () =>
             {
                 var acegikmo = _client.GetGuild(ACEGIKMO_SERVER);
-                await games.Init(acegikmo);
+                Console.WriteLine("Init commands");
+                await acegikmo.BulkOverwriteApplicationCommandAsync(
+                    GamesCommand.Commands
+                    .Concat(PronounCommand.Commands)
+                    .ToArray()
+                );
+                Console.WriteLine("Done init commands");
             };
 
             // Block the program until it is closed.

@@ -111,37 +111,32 @@ namespace AcegikmoDiscordBot
             }
         }
 
-        public async Task Init(SocketGuild acegikmo)
+        public static SlashCommandProperties[] Commands =
         {
-            await acegikmo.CreateApplicationCommandAsync(
-                new SlashCommandBuilder()
+            new SlashCommandBuilder()
                 .WithName("addgame")
                 .WithDescription("Add yourself to the list of games to be pinged with /pinggame")
                 .AddOption("game", ApplicationCommandOptionType.String, "The game to add", isRequired: true)
-                .Build());
-            await acegikmo.CreateApplicationCommandAsync(
-                new SlashCommandBuilder()
+                .Build(),
+            new SlashCommandBuilder()
                 .WithName("delgame")
                 .WithDescription("Remove yourself to the list of games to be pinged with /pinggame")
                 .AddOption("game", ApplicationCommandOptionType.String, "The game to remove", isRequired: true)
-                .Build());
-            await acegikmo.CreateApplicationCommandAsync(
-                new SlashCommandBuilder()
+                .Build(),
+            new SlashCommandBuilder()
                 .WithName("pinggame")
                 .WithDescription("Ping everyone who has added themselves to the game list")
                 .AddOption("game", ApplicationCommandOptionType.String, "The game to ping", isRequired: true)
-                .Build());
-            await acegikmo.CreateApplicationCommandAsync(
-                new SlashCommandBuilder()
+                .Build(),
+            new SlashCommandBuilder()
                 .WithName("games")
                 .WithDescription("List all games")
-                .Build());
-            await acegikmo.CreateApplicationCommandAsync(
-                new SlashCommandBuilder()
+                .Build(),
+            new SlashCommandBuilder()
                 .WithName("mygames")
                 .WithDescription("List games you've registered for")
-                .Build());
-        }
+                .Build()
+        };
 
         internal async Task SlashCommandExecuted(SocketSlashCommand command)
         {
@@ -257,13 +252,26 @@ namespace AcegikmoDiscordBot
             }
             var msg = $"All pingable games (and number of people): {string.Join(", ", gameDict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key.Replace("@", "@\u200B")} ({kvp.Value.Count})"))}";
             var maxLength = 2000;
+            var first = true;
+            async Task Send(string text)
+            {
+                if (first)
+                {
+                    await command.RespondAsync(text, ephemeral: true);
+                    first = false;
+                }
+                else
+                {
+                    await command.FollowupAsync(text, ephemeral: true);
+                }
+            }
             while (msg.Length > 2000)
             {
                 var slice = msg[..maxLength];
-                await command.RespondAsync(slice, ephemeral: true);
+                await Send(slice);
                 msg = msg[maxLength..];
             }
-            await command.RespondAsync(msg, ephemeral: true);
+            await Send(msg);
         }
 
         private async Task MyGames(SocketSlashCommand command)
