@@ -48,7 +48,7 @@ internal class TmpBan
         }
         if (!sender.Roles.Any(role => role.Id == MODERATOR_ROLE))
         {
-            await command.RespondAsync("noh >:(", ephemeral: true);
+            await command.RespondAsync("noh >:(");
             return;
         }
 
@@ -57,7 +57,7 @@ internal class TmpBan
 
         if (bannee.Roles.Any(role => role.Id == MODERATOR_ROLE))
         {
-            await command.RespondAsync("look, kid, don't try to mutiny here pls", ephemeral: true);
+            await command.RespondAsync("look, kid, don't try to mutiny here pls");
             return;
         }
 
@@ -94,7 +94,7 @@ internal class TmpBan
         }
         if (!sender.Roles.Any(role => role.Id == MODERATOR_ROLE))
         {
-            await command.RespondAsync("noh >:(", ephemeral: true);
+            await command.RespondAsync("noh >:(");
             return;
         }
 
