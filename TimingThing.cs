@@ -16,13 +16,15 @@ internal class TimingThing: IResponder<IMessageCreate> {
     private readonly Log _log;
     private readonly IDiscordRestChannelAPI _channelAPI;
     private readonly MemberizerCommand _memberizer;
+    private readonly TempBan _tempBan;
         
     private DateTime _nextUpdate;
 
-    public TimingThing(Log log, IDiscordRestChannelAPI channelAPI, MemberizerCommand memberizer) {
+    public TimingThing(Log log, IDiscordRestChannelAPI channelAPI, MemberizerCommand memberizer, TempBan tempBan) {
         _log = log;
         _channelAPI = channelAPI;
         _memberizer = memberizer;
+        _tempBan = tempBan;
         SetNextUpdate();
     }
 
@@ -50,7 +52,7 @@ internal class TimingThing: IResponder<IMessageCreate> {
         _log.Trim();
         Console.WriteLine("Done trimming. Starting channel trim.");
         var toDelete = await GetMessagesToDelete(modchannel);
-        Console.WriteLine($"Deleting {toDelete} messages");
+        Console.WriteLine($"Deleting {toDelete.Count} messages");
         DateTimeOffset twoWeeks = DateTime.UtcNow.AddDays(-13);
         await _channelAPI.BulkDeleteMessagesAsync(modchannel, toDelete.Where(item => item.Timestamp > twoWeeks).ToList());
         var others = toDelete.Where(item => item.Timestamp <= twoWeeks).ToList();
@@ -63,17 +65,20 @@ internal class TimingThing: IResponder<IMessageCreate> {
                 Console.WriteLine($"{i++}/{others.Count}");
             }
         }
+
+        await _tempBan.CheckBans();
         Console.WriteLine($"Done");
     }
 
     private async Task<List<Snowflake>> GetMessagesToDelete(Snowflake channel) {
         var toDelete = new List<Snowflake>();
         DateTimeOffset timeLimit = DateTime.UtcNow.AddDays(-7);
-        var limit = 1000;
+        var limit = 100;
         var youngest = ulong.MaxValue;
         {
             var count = 0;
             var messages = await _channelAPI.GetChannelMessagesAsync(channel, limit: limit);
+            if (!messages.IsSuccess) return toDelete;
             foreach (var message in messages.Entity) {
                 count++;
                 if (message.Timestamp < timeLimit)
@@ -90,6 +95,7 @@ internal class TimingThing: IResponder<IMessageCreate> {
         for (var i = 0; ; i++) {
             var count = 0;
             var messages = await _channelAPI.GetChannelMessagesAsync(channel, before: new Snowflake(youngest), limit: limit);
+            if (!messages.IsSuccess) return toDelete;
             foreach (var message in messages.Entity) {
                 count++;
                 if (message.Timestamp < timeLimit)

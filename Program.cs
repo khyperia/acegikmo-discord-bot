@@ -22,12 +22,14 @@ internal class ConfigClass {
 
 internal class SettingsClass {
     public ulong ashl { get; set; }
+    public ulong modRole { get; set; }
     public ulong server { get; set; }
     public ulong deleted_messages { get; set; }
     public ulong lewd { get; set; }
     public Dictionary<string, ulong> pronouns { get; set; }
 
     public Snowflake Ashl => new (ashl);
+    public Snowflake ModRole => new (modRole);
     public Snowflake Server => new (server);
     public Snowflake DeletedMsgs => new (deleted_messages);
     public Snowflake Lewd => new (lewd);
@@ -66,6 +68,7 @@ internal class Program {
             .AddDiscordGateway(_ => Config.token)
             .AddLogging(Console.WriteLine)
             .AddResponder<Log>()
+            .AddResponder<TempBan>()
             .AddResponder<GuildCommands>()
             .AddResponder<HelpCommand>()
             .AddResponder<EchoCommand>()
@@ -77,6 +80,8 @@ internal class Program {
             .AddDiscordCommands(true)
             .AddCommandGroup<PronounCommand>()
             .AddCommandGroup<GamesCommand>()
+            .AddCommandGroup<OptOut>()
+            .AddCommandGroup<TempBan>()
             .BuildServiceProvider();
         _client = services.GetRequiredService<DiscordGatewayClient>();
     }
