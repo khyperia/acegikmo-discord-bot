@@ -8,7 +8,6 @@ using Discord.WebSocket;
 
 namespace AcegikmoDiscordBot
 {
-#pragma warning disable IDE1006 // Naming Styles
 #pragma warning disable CS8618 // Non-nullable field is uninitialized.
 #pragma warning disable CS0649
     [DataContract]
@@ -19,7 +18,6 @@ namespace AcegikmoDiscordBot
     }
 #pragma warning restore CS0649
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
-#pragma warning restore IDE1006 // Naming Styles
 
     internal class Program : IDisposable
     {
@@ -48,7 +46,6 @@ namespace AcegikmoDiscordBot
         {
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                ExclusiveBulkDelete = true,
                 GatewayIntents =
                     GatewayIntents.Guilds |
                     GatewayIntents.GuildMembers |

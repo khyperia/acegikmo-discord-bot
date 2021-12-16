@@ -193,7 +193,7 @@ namespace AcegikmoDiscordBot
             var maxLength = 2000;
             while (msg.Length > 2000)
             {
-                var slice = msg.Substring(0, maxLength);
+                var slice = msg[..maxLength];
                 await message.Channel.SendMessageAsync(slice);
                 msg = msg[maxLength..];
             }

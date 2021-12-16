@@ -66,7 +66,7 @@ namespace AcegikmoDiscordBot
             Console.WriteLine($"Done");
         }
 
-        private async IAsyncEnumerable<ulong> GetMessagesToDelete(SocketTextChannel channel)
+        private static async IAsyncEnumerable<ulong> GetMessagesToDelete(SocketTextChannel channel)
         {
             DateTimeOffset timeLimit = DateTime.UtcNow.AddDays(-7);
             var limit = 1000;
