@@ -51,11 +51,6 @@ internal class GamesCommand
 
     private void SaveDict() => _json.Save();
 
-    public static async Task Checkmark(SocketSlashCommand command, bool ephemeral = false)
-    {
-        await command.RespondAsync("\u2705", ephemeral: ephemeral);
-    }
-
     public static async Task Checkmark(SocketMessage message)
     {
         var obtainedMessage = await message.Channel.GetMessageAsync(message.Id);
@@ -66,19 +61,6 @@ internal class GamesCommand
         else
         {
             await message.Channel.SendMessageAsync("\u2705");
-        }
-    }
-
-    public static async Task CrossReact(SocketMessage message)
-    {
-        var obtainedMessage = await message.Channel.GetMessageAsync(message.Id);
-        if (obtainedMessage is RestUserMessage rest)
-        {
-            await rest.AddReactionAsync(new Emoji("\u274c"));
-        }
-        else
-        {
-            await message.Channel.SendMessageAsync("\u274c");
         }
     }
 
@@ -192,7 +174,7 @@ internal class GamesCommand
         {
             list.Add(command.User.Id);
             SaveDict();
-            await Checkmark(command);
+            await command.RespondAsync($"Added you to the ping list for {game}");
         }
     }
 
@@ -214,7 +196,7 @@ internal class GamesCommand
                 gameDict.Remove(game);
             }
             SaveDict();
-            await Checkmark(command);
+            await command.RespondAsync($"Removed you from the ping list for {game}");
         }
     }
 

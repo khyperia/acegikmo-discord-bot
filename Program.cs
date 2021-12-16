@@ -82,14 +82,12 @@ internal class Program : IDisposable
         _client.Ready += async () =>
         {
             var acegikmo = _client.GetGuild(ACEGIKMO_SERVER);
-            Console.WriteLine("Init commands");
             var commands = await acegikmo.BulkOverwriteApplicationCommandAsync(
                 GamesCommand.Commands
                 .Concat(PronounCommand.Commands)
                 .Concat(TmpBan.Commands)
                 .ToArray()
             );
-            Console.WriteLine("Done init commands");
         };
 
         // Block the program until it is closed.

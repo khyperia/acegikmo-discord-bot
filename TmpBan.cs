@@ -18,6 +18,7 @@ internal class TmpBan
             .WithDescription("Temporarily ban a user")
             .AddOption("user", ApplicationCommandOptionType.User, "The user to ban", isRequired: true)
             .AddOption("days", ApplicationCommandOptionType.Integer, "The number of days to ban for", isRequired: true)
+            .AddOption("message", ApplicationCommandOptionType.String, "The reason why, to DM the user with", isRequired: false)
             .Build(),
         new SlashCommandBuilder()
             .WithName("tmpbans")
@@ -53,20 +54,32 @@ internal class TmpBan
 
         var options = command.Data.Options.ToArray();
         var bannee = (SocketGuildUser)options[0].Value;
-        await bannee.BanAsync(0, "temp banned by slash command");
+
+        if (bannee.Roles.Any(role => role.Id == MODERATOR_ROLE))
+        {
+            await command.RespondAsync("look, kid, don't try to mutiny here pls", ephemeral: true);
+            return;
+        }
+
         var days = (int)options[1].Value;
+        var reason = options.Length >= 3 ? (string?)options[2].Value : null;
         var newTime = DateTimeOffset.UtcNow.AddDays(days);
         string message;
         if (BanData.Data.TryGetValue(bannee.Id, out var existingTimeInt))
         {
             var existingTime = DateTimeOffset.FromUnixTimeSeconds(existingTimeInt);
-            message = $"{bannee.Mention} was already banned until {existingTime}, but that has been updated to {newTime}";
+            message = $"{bannee.Mention} was already banned until {existingTime}, but that has been updated to {newTime} ({days} day(sSs)). Reason (i guess won't be sent to user): {reason}";
         }
         else
         {
-            message = $"{bannee.Mention} has been banned until (the UTC midnight after) {newTime}";
+            message = $"{bannee.Mention} has been banned for {days} days. Reason: {reason}";
+
+            await bannee.SendMessageAsync($"You have been temporarily banned from Acegikmo's server for {days} days. You will be unbanned automatically around {newTime}. Reason: {reason}");
         }
-        await command.RespondAsync(message, ephemeral: true);
+
+        await bannee.BanAsync(0, "temp banned by slash command");
+
+        await command.RespondAsync(message);
         var modchannel = await channel.Guild.GetTextChannelAsync(ACEGIKMO_MOD_LOUNGE);
         await modchannel.SendMessageAsync(message + $" by {command.User.Mention}");
         BanData.Data[bannee.Id] = newTime.ToUnixTimeSeconds();
