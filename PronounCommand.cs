@@ -12,11 +12,11 @@ namespace AcegikmoDiscordBot
 {
     internal class PronounCommand: IResponder<IMessageCreate>
     {
-        private static readonly ulong SheHer = 506469351713538070U;
-        private static readonly ulong HeHim = 506469615841443840U;
-        private static readonly ulong TheyThem = 506469646602600459U;
-        private static readonly ulong HimHerThey = 583033959378583562U;
-        private static readonly ulong FaeFaer = 881143654973075477U;
+        private static readonly ulong SheHer = 920793126266880001;
+        private static readonly ulong HeHim = 920793126266880001;
+        private static readonly ulong TheyThem = 920793126266880001;
+        private static readonly ulong HimHerThey = 920793126266880001;
+        private static readonly ulong FaeFaer = 920793126266880001;
 
         private readonly IDiscordRestChannelAPI _channelApi;
         private readonly IDiscordRestGuildAPI _guildApi;
@@ -51,12 +51,12 @@ namespace AcegikmoDiscordBot
                     var id = idNull.Value;
                     if (member.Entity.Roles.Contains(new Snowflake(id)))
                     {
-                        await _guildApi.AddGuildMemberRoleAsync(message.GuildID.Value, message.Author.ID, new Snowflake(id));
+                        await _guildApi.RemoveGuildMemberRoleAsync(message.GuildID.Value, message.Author.ID, new Snowflake(id));
                         await _gamesCommand.CrossReact(message);
                     }
                     else
                     {
-                        await _guildApi.RemoveGuildMemberRoleAsync(message.GuildID.Value, message.Author.ID, new Snowflake(id));
+                        await _guildApi.AddGuildMemberRoleAsync(message.GuildID.Value, message.Author.ID, new Snowflake(id));
                         await _gamesCommand.Checkmark(message);
                     }
                 }

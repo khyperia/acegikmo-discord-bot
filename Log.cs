@@ -119,7 +119,7 @@ namespace AcegikmoDiscordBot {
         }
 
         private async Task LogMessage(IPartialMessage message) {
-            if (message.GuildID.IsAcegikmo()) {
+            if (!message.GuildID.IsAcegikmo()) {
                 return;
             }
 
