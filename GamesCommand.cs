@@ -31,8 +31,30 @@ namespace AcegikmoDiscordBot
                 return result;
             }
         }
+        private Dictionary<string, List<ulong>>? GameDict(SocketSlashCommand command)
+        {
+            if (command.Channel is not SocketGuildChannel chan)
+            {
+                return null;
+            }
+            else if (AllGameDicts.TryGetValue(chan.Guild.Id, out var dict))
+            {
+                return dict;
+            }
+            else
+            {
+                var result = new Dictionary<string, List<ulong>>();
+                AllGameDicts.Add(chan.Guild.Id, result);
+                return result;
+            }
+        }
 
         private void SaveDict() => _json.Save();
+
+        public static async Task Checkmark(SocketSlashCommand command, bool ephemeral = false)
+        {
+            await command.RespondAsync("\u2705", ephemeral: ephemeral);
+        }
 
         public static async Task Checkmark(SocketMessage message)
         {
@@ -62,29 +84,6 @@ namespace AcegikmoDiscordBot
 
         public async Task MessageReceivedAsync(SocketMessage message)
         {
-            if (message.Content.StartsWith("!addgame "))
-            {
-                var game = message.Content["!addgame ".Length..].ToLower();
-                await AddGame(message, game);
-            }
-            if (message.Content.StartsWith("!delgame "))
-            {
-                var game = message.Content["!delgame ".Length..].ToLower();
-                await DelGame(message, game);
-            }
-            if (message.Content.StartsWith("!pinggame "))
-            {
-                var game = message.Content["!pinggame ".Length..].ToLower();
-                await PingGame(message, game);
-            }
-            if (message.Content == "!games")
-            {
-                await ListGames(message);
-            }
-            if (message.Content == "!mygames")
-            {
-                await MyGames(message);
-            }
             if (message.Author.Id == ASHL && message.Content.StartsWith("!nukegame "))
             {
                 var game = message.Content["!nukegame ".Length..].ToLower();
@@ -112,9 +111,76 @@ namespace AcegikmoDiscordBot
             }
         }
 
-        private async Task AddGame(SocketMessage message, string game)
+        public async Task Init(SocketGuild acegikmo)
         {
-            var gameDict = GameDict(message);
+            await acegikmo.CreateApplicationCommandAsync(
+                new SlashCommandBuilder()
+                .WithName("addgame")
+                .WithDescription("Add yourself to the list of games to be pinged with /pinggame")
+                .AddOption("game", ApplicationCommandOptionType.String, "The game to add", isRequired: true)
+                .Build());
+            await acegikmo.CreateApplicationCommandAsync(
+                new SlashCommandBuilder()
+                .WithName("delgame")
+                .WithDescription("Remove yourself to the list of games to be pinged with /pinggame")
+                .AddOption("game", ApplicationCommandOptionType.String, "The game to remove", isRequired: true)
+                .Build());
+            await acegikmo.CreateApplicationCommandAsync(
+                new SlashCommandBuilder()
+                .WithName("pinggame")
+                .WithDescription("Ping everyone who has added themselves to the game list")
+                .AddOption("game", ApplicationCommandOptionType.String, "The game to ping", isRequired: true)
+                .Build());
+            await acegikmo.CreateApplicationCommandAsync(
+                new SlashCommandBuilder()
+                .WithName("games")
+                .WithDescription("List all games")
+                .Build());
+            await acegikmo.CreateApplicationCommandAsync(
+                new SlashCommandBuilder()
+                .WithName("mygames")
+                .WithDescription("List games you've registered for")
+                .Build());
+        }
+
+        internal async Task SlashCommandExecuted(SocketSlashCommand command)
+        {
+            switch (command.Data.Name)
+            {
+                case "addgame":
+                    {
+                        var game = (string)command.Data.Options.First().Value;
+                        await AddGame(command, game);
+                    }
+                    break;
+                case "delgame":
+                    {
+                        var game = (string)command.Data.Options.First().Value;
+                        await DelGame(command, game);
+                    }
+                    break;
+                case "pinggame":
+                    {
+                        var game = (string)command.Data.Options.First().Value;
+                        await PingGame(command, game);
+                    }
+                    break;
+                case "games":
+                    {
+                        await ListGames(command);
+                    }
+                    break;
+                case "mygames":
+                    {
+                        await MyGames(command);
+                    }
+                    break;
+            }
+        }
+
+        private async Task AddGame(SocketSlashCommand command, string game)
+        {
+            var gameDict = GameDict(command);
             if (gameDict == null)
             {
                 return;
@@ -123,28 +189,28 @@ namespace AcegikmoDiscordBot
             {
                 list = gameDict[game] = new List<ulong>();
             }
-            if (list.Contains(message.Author.Id))
+            if (list.Contains(command.User.Id))
             {
-                await message.Channel.SendMessageAsync($"You're already in {game.Replace("@", "@\u200B")}");
+                await command.RespondAsync($"You're already in {game.Replace("@", "@\u200B")}");
             }
             else
             {
-                list.Add(message.Author.Id);
+                list.Add(command.User.Id);
                 SaveDict();
-                await Checkmark(message);
+                await Checkmark(command);
             }
         }
 
-        private async Task DelGame(SocketMessage message, string game)
+        private async Task DelGame(SocketSlashCommand command, string game)
         {
-            var gameDict = GameDict(message);
+            var gameDict = GameDict(command);
             if (gameDict == null)
             {
                 return;
             }
-            if (!gameDict.TryGetValue(game, out var list) || !list.Remove(message.Author.Id))
+            if (!gameDict.TryGetValue(game, out var list) || !list.Remove(command.User.Id))
             {
-                await message.Channel.SendMessageAsync($"You are not in the list for {game.Replace("@", "@\u200B")}");
+                await command.RespondAsync($"You are not in the list for {game.Replace("@", "@\u200B")}");
             }
             else
             {
@@ -153,38 +219,38 @@ namespace AcegikmoDiscordBot
                     gameDict.Remove(game);
                 }
                 SaveDict();
-                await Checkmark(message);
+                await Checkmark(command);
             }
         }
 
-        private async Task PingGame(SocketMessage message, string game)
+        private async Task PingGame(SocketSlashCommand command, string game)
         {
-            var gameDict = GameDict(message);
+            var gameDict = GameDict(command);
             if (gameDict == null)
             {
                 return;
             }
             if (!gameDict.TryGetValue(game, out var list))
             {
-                await message.Channel.SendMessageAsync($"Nobody's in the list for {game.Replace("@", "@\u200B")}.");
+                await command.RespondAsync($"Nobody's in the list for {game.Replace("@", "@\u200B")}.");
             }
-            else if (!list.Contains(message.Author.Id))
+            else if (!list.Contains(command.User.Id))
             {
-                await message.Channel.SendMessageAsync($"You are not in the list for {game.Replace("@", "@\u200B")}, so you can't ping it.");
+                await command.RespondAsync($"You are not in the list for {game.Replace("@", "@\u200B")}, so you can't ping it.");
             }
             else if (list.Count == 1)
             {
-                await message.Channel.SendMessageAsync($"You're the only one registered for {game.Replace("@", "@\u200B")}, sorry :c");
+                await command.RespondAsync($"You're the only one registered for {game.Replace("@", "@\u200B")}, sorry :c");
             }
             else
             {
-                await message.Channel.SendMessageAsync($"{message.Author.Mention} wants to play {game.Replace("@", "@\u200B")}! {string.Join(", ", list.Where(id => id != message.Author.Id).Select(MentionUtils.MentionUser))}");
+                await command.RespondAsync($"{command.User.Mention} wants to play {game.Replace("@", "@\u200B")}! {string.Join(", ", list.Where(id => id != command.User.Id).Select(MentionUtils.MentionUser))}");
             }
         }
 
-        private async Task ListGames(SocketMessage message)
+        private async Task ListGames(SocketSlashCommand command)
         {
-            var gameDict = GameDict(message);
+            var gameDict = GameDict(command);
             if (gameDict == null)
             {
                 return;
@@ -194,27 +260,27 @@ namespace AcegikmoDiscordBot
             while (msg.Length > 2000)
             {
                 var slice = msg[..maxLength];
-                await message.Channel.SendMessageAsync(slice);
+                await command.RespondAsync(slice, ephemeral: true);
                 msg = msg[maxLength..];
             }
-            await message.Channel.SendMessageAsync(msg);
+            await command.RespondAsync(msg, ephemeral: true);
         }
 
-        private async Task MyGames(SocketMessage message)
+        private async Task MyGames(SocketSlashCommand command)
         {
-            var gameDict = GameDict(message);
+            var gameDict = GameDict(command);
             if (gameDict == null)
             {
                 return;
             }
-            var result = string.Join(", ", gameDict.Where(kvp => kvp.Value.Contains(message.Author.Id)).Select(kvp => kvp.Key.Replace("@", "@\u200B")).OrderBy(x => x));
+            var result = string.Join(", ", gameDict.Where(kvp => kvp.Value.Contains(command.User.Id)).Select(kvp => kvp.Key.Replace("@", "@\u200B")).OrderBy(x => x));
             if (string.IsNullOrEmpty(result))
             {
-                await message.Channel.SendMessageAsync($"You're not in any games list");
+                await command.RespondAsync($"You're not in any games list", ephemeral: true);
             }
             else
             {
-                await message.Channel.SendMessageAsync($"Your games: {result}");
+                await command.RespondAsync($"Your games: {result}", ephemeral: true);
             }
         }
 

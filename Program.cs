@@ -61,7 +61,9 @@ namespace AcegikmoDiscordBot
             _client.Log += a => { Console.WriteLine(a); return Task.CompletedTask; };
             _client.MessageDeleted += new DeleteEcho(_log).MessageDeletedAsync;
             _client.MessageReceived += EchoCommand.MessageReceivedAsync;
-            _client.MessageReceived += new GamesCommand().MessageReceivedAsync;
+            var games = new GamesCommand();
+            _client.MessageReceived += games.MessageReceivedAsync;
+            _client.SlashCommandExecuted += games.SlashCommandExecuted;
             _client.MessageReceived += HelpCommand.MessageReceivedAsync;
             _client.MessageReceived += PronounCommand.MessageReceivedAsync;
             _client.MessageReceived += new MemberizerCommand(_log).MessageReceivedAsync;
@@ -71,6 +73,12 @@ namespace AcegikmoDiscordBot
 
             await _client.LoginAsync(TokenType.Bot, Config.token);
             await _client.StartAsync();
+
+            _client.Ready += async () =>
+            {
+                var acegikmo = _client.GetGuild(ACEGIKMO_SERVER);
+                await games.Init(acegikmo);
+            };
 
             // Block the program until it is closed.
             await Task.Delay(-1);
