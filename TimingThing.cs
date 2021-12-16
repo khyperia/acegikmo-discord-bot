@@ -19,7 +19,6 @@ namespace AcegikmoDiscordBot
         private readonly IDiscordRestChannelAPI _channelAPI;
         private readonly MemberizerCommand _memberizer;
         
-        private const ulong LEWD_CHANNEL = 920744283403857920UL;
         private DateTime _nextUpdate;
 
         public TimingThing(Log log, IDiscordRestChannelAPI channelAPI, MemberizerCommand memberizer)
@@ -47,11 +46,11 @@ namespace AcegikmoDiscordBot
 
         private async Task DoTimer()
         {
-            var lewdchannel = new Snowflake(LEWD_CHANNEL);
+            var lewdchannel = Settings.Lewd;
             await _channelAPI.CreateMessageAsync(lewdchannel, "Please make sure you've read the topic of this channel, as this channel is \U0001F525*spicy*\U0001F525 and it's *important*.");
             SetNextUpdate();
-            var modchannel = ACEGIKMO_DELETED_MESSAGES;
-            await _memberizer.Memberizer(_log, modchannel, ACEGIKMO_SERVER, 50);
+            var modchannel = Settings.DeletedMsgs;
+            await _memberizer.Memberizer(_log, modchannel, Settings.Server, 50);
             Console.WriteLine("Trimming...");
             _log.Trim();
             Console.WriteLine("Done trimming. Starting channel trim.");

@@ -12,12 +12,6 @@ namespace AcegikmoDiscordBot
 {
     internal class PronounCommand: IResponder<IMessageCreate>
     {
-        private static readonly ulong SheHer = 920793126266880001;
-        private static readonly ulong HeHim = 920793126266880001;
-        private static readonly ulong TheyThem = 920793126266880001;
-        private static readonly ulong HimHerThey = 920793126266880001;
-        private static readonly ulong FaeFaer = 920793126266880001;
-
         private readonly IDiscordRestChannelAPI _channelApi;
         private readonly IDiscordRestGuildAPI _guildApi;
         private readonly GamesCommand _gamesCommand;
@@ -36,27 +30,20 @@ namespace AcegikmoDiscordBot
             }
             if (message.Content.StartsWith("!pronoun ") && message.GuildID.IsAcegikmo())
             {
-                var role = message.Content["!pronoun ".Length..].ToLower();
-                ulong? idNull = role switch
-                {
-                    "she/her" => SheHer,
-                    "he/him" => HeHim,
-                    "they/them" => TheyThem,
-                    "him/her/they" => HimHerThey,
-                    "fae/faer" => FaeFaer,
-                    _ => null,
-                };
+                var role = message.Content["!pronoun ".Length..].ToLower().Trim();
+
+                Snowflake? idNull = Settings.MatchPronoun(role);
                 if (idNull != null) {
                     var member = await _guildApi.GetGuildMemberAsync(message.GuildID.Value, message.Author.ID);
                     var id = idNull.Value;
-                    if (member.Entity.Roles.Contains(new Snowflake(id)))
+                    if (member.Entity.Roles.Contains(id))
                     {
-                        await _guildApi.RemoveGuildMemberRoleAsync(message.GuildID.Value, message.Author.ID, new Snowflake(id));
+                        await _guildApi.RemoveGuildMemberRoleAsync(message.GuildID.Value, message.Author.ID, id);
                         await _gamesCommand.CrossReact(message);
                     }
                     else
                     {
-                        await _guildApi.AddGuildMemberRoleAsync(message.GuildID.Value, message.Author.ID, new Snowflake(id));
+                        await _guildApi.AddGuildMemberRoleAsync(message.GuildID.Value, message.Author.ID, id);
                         await _gamesCommand.Checkmark(message);
                     }
                 }

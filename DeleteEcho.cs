@@ -25,8 +25,8 @@ namespace AcegikmoDiscordBot
             var messageId = delete.ID;
             var channelId = delete.ChannelID;
             var guildId = delete.GuildID;
-            if (guildId.HasValue && guildId.IsAcegikmo() && channelId != ACEGIKMO_DELETED_MESSAGES) {
-                var modChannel = ACEGIKMO_DELETED_MESSAGES;
+            if (guildId.HasValue && guildId.IsAcegikmo() && channelId != Settings.DeletedMsgs) {
+                var modChannel = Settings.DeletedMsgs;
                 if (_log.TryGetMessage(messageId.Value, out var message))
                 {
                     var after = _log.TryGetPreviousMessage(messageId.Value, channelId.Value, out var previous)
