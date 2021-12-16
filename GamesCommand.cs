@@ -19,6 +19,7 @@ using Remora.Results;
 
 namespace AcegikmoDiscordBot; 
 
+[Group("games")]
 internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
     private readonly Json<Dictionary<ulong, Dictionary<string, List<ulong>>>> _json = new("games.json");
 
@@ -56,7 +57,7 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
         await _discordAPI.CreateReactionAsync(message.ChannelID, message.ID, "❌");
     }
 
-    [Command("addgame")]
+    [Command("add")]
     [Ephemeral]
     [Description("Join a new or existing game")]
     public async Task<Result> AddGame([Description("Game to add")]string game) {
@@ -80,7 +81,7 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
         return Result.FromSuccess();
     }
     
-    [Command("delgame")]
+    [Command("leave")]
     [Ephemeral]
     [Description("Leave a game")]
     public async Task<Result> DelGame([Description("Game to leave")]string game) {
@@ -104,7 +105,7 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
         return Result.FromSuccess();
     }
     
-    [Command("pinggame")]
+    [Command("ping")]
     [Description("Ping a game to look for players")]
     public async Task<Result> PingGame([Description("Game to ping")]string game) {
         if(_commandContext.Context is not InteractionContext context) return Result.FromSuccess();
@@ -138,7 +139,7 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
         return Result.FromSuccess();
     }
 
-    [Command("games")]
+    [Command("list")]
     [Ephemeral]
     [Description("list all games")]
     public async Task<Result> ListGames() {
@@ -158,7 +159,7 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
         return Result.FromSuccess();
     }
     
-    [Command("showgames")]
+    [Command("list-public")]
     [Description("list all games publically")]
     public async Task<Result> ShowGames() {
         if(_commandContext.Context is not InteractionContext context) return Result.FromSuccess();
@@ -180,7 +181,7 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
         return Result.FromSuccess();
     }
     
-    [Command("mygames")]
+    [Command("own")]
     [Ephemeral]
     [Description("see your own games")]
     public async Task<Result> MyGames() {
