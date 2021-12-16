@@ -2,20 +2,19 @@ using Discord;
 using Discord.WebSocket;
 using System.Linq;
 using System.Threading.Tasks;
-using static AcegikmoDiscordBot.Program;
 
-namespace AcegikmoDiscordBot
+namespace AcegikmoDiscordBot;
+
+internal class PronounCommand
 {
-    internal class PronounCommand
-    {
-        private static readonly ulong SheHer = 506469351713538070U;
-        private static readonly ulong HeHim = 506469615841443840U;
-        private static readonly ulong TheyThem = 506469646602600459U;
-        private static readonly ulong HimHerThey = 583033959378583562U;
-        private static readonly ulong FaeFaer = 881143654973075477U;
+    private static readonly ulong SheHer = 506469351713538070U;
+    private static readonly ulong HeHim = 506469615841443840U;
+    private static readonly ulong TheyThem = 506469646602600459U;
+    private static readonly ulong HimHerThey = 583033959378583562U;
+    private static readonly ulong FaeFaer = 881143654973075477U;
 
-        public static SlashCommandProperties[] Commands =
-        {
+    public static SlashCommandProperties[] Commands =
+    {
             new SlashCommandBuilder()
             .WithName("pronoun")
             .WithDescription("Set your pronoun role")
@@ -34,35 +33,34 @@ namespace AcegikmoDiscordBot
             .Build()
         };
 
-        internal static async Task SlashCommandExecuted(SocketSlashCommand command)
+    internal static async Task SlashCommandExecuted(SocketSlashCommand command)
+    {
+        if (command.Data.Name != "pronoun" || command.User is not IGuildUser author || command.Channel is not SocketTextChannel channel)
         {
-            if (command.Data.Name != "pronoun" || command.User is not IGuildUser author || command.Channel is not SocketTextChannel channel)
+            return;
+        }
+        var role = (string)command.Data.Options.First();
+        ulong? idNull = role switch
+        {
+            "she/her" => SheHer,
+            "he/him" => HeHim,
+            "they/them" => TheyThem,
+            "him/her/they" => HimHerThey,
+            "fae/faer" => FaeFaer,
+            _ => null,
+        };
+        if (idNull != null)
+        {
+            var id = idNull.Value;
+            if (author.RoleIds.Contains(id))
             {
-                return;
+                await author.RemoveRoleAsync(channel.Guild.GetRole(id));
+                await command.RespondAsync("Pronoun role removed", ephemeral: true);
             }
-            var role = (string)command.Data.Options.First();
-            ulong? idNull = role switch
+            else
             {
-                "she/her" => SheHer,
-                "he/him" => HeHim,
-                "they/them" => TheyThem,
-                "him/her/they" => HimHerThey,
-                "fae/faer" => FaeFaer,
-                _ => null,
-            };
-            if (idNull != null)
-            {
-                var id = idNull.Value;
-                if (author.RoleIds.Contains(id))
-                {
-                    await author.RemoveRoleAsync(channel.Guild.GetRole(id));
-                    await command.RespondAsync("Pronoun role removed", ephemeral: true);
-                }
-                else
-                {
-                    await author.AddRoleAsync(channel.Guild.GetRole(id));
-                    await command.RespondAsync("Pronoun role added", ephemeral: true);
-                }
+                await author.AddRoleAsync(channel.Guild.GetRole(id));
+                await command.RespondAsync("Pronoun role added", ephemeral: true);
             }
         }
     }
