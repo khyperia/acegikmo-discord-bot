@@ -11,8 +11,7 @@ namespace AcegikmoDiscordBot;
 public class GuildCommands: IResponder<IReady > {
 	private readonly SlashService _slashService;
 
-	public GuildCommands(SlashService slashService)
-	{
+	public GuildCommands(SlashService slashService) {
 		_slashService = slashService;
 	}
 	
