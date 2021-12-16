@@ -76,6 +76,7 @@ internal class Program {
             .AddResponder<PronounCommand>()
             .AddDiscordCommands(true)
             .AddCommandGroup<PronounCommand>()
+            .AddCommandGroup<GamesCommand>()
             .BuildServiceProvider();
         _client = services.GetRequiredService<DiscordGatewayClient>();
     }
