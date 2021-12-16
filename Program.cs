@@ -7,6 +7,8 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Remora.Commands.Extensions;
+using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Gateway;
 using Remora.Discord.Gateway.Extensions;
 using Remora.Rest.Core;
@@ -66,6 +68,7 @@ internal class Program {
             .AddDiscordGateway(_ => Config.token)
             .AddLogging(Console.WriteLine)
             .AddResponder<Log>()
+            .AddResponder<GuildCommands>()
             .AddResponder<HelpCommand>()
             .AddResponder<EchoCommand>()
             .AddResponder<DeleteEcho>()
@@ -73,6 +76,8 @@ internal class Program {
             .AddResponder<MemberizerCommand>()
             .AddResponder<TimingThing>()
             .AddResponder<PronounCommand>()
+            .AddDiscordCommands(true)
+            .AddCommandGroup<PronounCommand>()
             .BuildServiceProvider();
         _client = services.GetRequiredService<DiscordGatewayClient>();
     }
