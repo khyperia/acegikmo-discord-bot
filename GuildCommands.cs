@@ -38,6 +38,6 @@ public class GuildCommands: IResponder<IReady> {
 				});
 		}
 		
-		return Result.FromSuccess();
+		return Success;
 	}
 }

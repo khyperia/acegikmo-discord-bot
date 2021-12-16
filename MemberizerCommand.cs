@@ -27,35 +27,43 @@ internal class MemberizerCommand : IResponder<IMessageCreate> {
 
     public async Task Memberizer(Log log, Snowflake channel, Snowflake guild, ulong desiredCount) {
         var members = await _guildApi.ListGuildMembersAsync(guild);
-        var nonmembers = members.Entity.Where(user => !IsMember(user)).Select(user => user.User.Value.ID.Value).ToList();
+        var nonmembers = members.Entity
+            .Where(user => !IsMember(user))
+            .Select(user => user.User.Nullsy()?.ID.Value ?? 0).ToList();
         var counts = log.MessageCounts(nonmembers, desiredCount);
         var msg = string.Join("\n", counts.Select(item => $"{MentionUtils.MentionUser(item.authorId)} has sent {item.count} messages"));
         if (!string.IsNullOrEmpty(msg)) {
             await _channelApi.CreateMessageAsync(channel, msg);
+        } else {
+            await _channelApi.CreateMessageAsync(channel, @"noone found ¯\_(ツ)_/¯");
         }
     }
 
     public async Task<Result> RespondAsync(IMessageCreate message, CancellationToken ct = new()) {
+        var server = Program.Settings.Server;
         if (message.Author.IsAshl() && message.Content.StartsWith("!memberizer ") &&
             ulong.TryParse(message.Content["!memberizer ".Length..], out var desiredCount)) {
-            await Memberizer(_log, message.ChannelID, message.GuildID.Value, desiredCount);
+            await Memberizer(_log, message.ChannelID, server, desiredCount);
         }
         if (message.Author.IsAshl() && message.Content == "!membercount") {
-            var roles = await _guildApi.GetGuildRolesAsync(message.GuildID.Value);
-            var users = await _guildApi.ListGuildMembersAsync(message.GuildID.Value);
-            var roleList = string.Join(", ", roles.Entity.Select(role => {
-                var count = users.Entity.Count(user => user.Roles.Contains(role.ID));
+            if ((await _guildApi.GetGuildRolesAsync(server)).Unpack(out var roles, out var roles_err))
+                return roles_err;
+            if ((await _guildApi.ListGuildMembersAsync(server)).Unpack(out var users, out var users_err))
+                return users_err;
+            var roleList = string.Join(", ", roles.Select(role => {
+                var count = users.Count(user => user.Roles.Contains(role.ID));
                 return $"{role.Name.Replace("@everyone", "at-everyone")}={count}";
             }));
-            var msg = $"total={users.Entity.Count}, {roleList}";
+            var msg = $"total={users.Count}, {roleList}";
             await _channelApi.CreateMessageAsync(message.ChannelID, msg);
         }
         if (message.Author.IsAshl() && message.Content == "!roles") {
-            var roles = await _guildApi.GetGuildRolesAsync(message.GuildID.Value);
-            var msg = string.Join(", ", roles.Entity.Select(role => $"{role.Name.Replace("@everyone", "at-everyone")}={role.ID.Value}"));
+            if ((await _guildApi.GetGuildRolesAsync(server)).Unpack(out var roles, out var roles_err))
+                return roles_err;
+            var msg = string.Join(", ", roles.Select(role => $"{role.Name.Replace("@everyone", "at-everyone")}={role.ID.Value}"));
             await _channelApi.CreateMessageAsync(message.ChannelID, msg);
         }
-        return Result.FromSuccess();
+        return Success;
     }
 
     private bool IsMember(IGuildMember user) {

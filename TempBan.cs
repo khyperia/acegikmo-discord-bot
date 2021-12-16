@@ -44,13 +44,12 @@ public class TempBan: CommandGroup, IResponder<IInteractionCreate> {
 	[Command("yeet")]
 	[Ephemeral]
 	[CommandType(ApplicationCommandType.User)]
-	[RequireDiscordPermission(DiscordPermission.BanMembers)]
 	public async Task<Result> Yeet() {
-		if(_commandContext.Context is not InteractionContext context) return Result.FromSuccess();
-		if(!context.Member.HasValue) return Result.FromSuccess();
-		if (!context.Member.Value.Permissions.Value.HasPermission(DiscordPermission.BanMembers)) {
+		if(_commandContext.Context is not InteractionContext { Member: { HasValue: true, Value: var member } } context) 
+			return Success;
+		if (!member.Permissions.Value.HasPermission(DiscordPermission.BanMembers)) {
 			await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token, "You dont have the permission to ban people :V");
-			return Result.FromSuccess();
+			return Success;
 		}
 		
 		var userToBan = context.Data.Resolved.Value.Users.Value.Keys.First();
@@ -62,19 +61,19 @@ public class TempBan: CommandGroup, IResponder<IInteractionCreate> {
 		};
 
 		await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token, 
-			$"Are you sure you want to yeet {MentionUtils.MentionUser(userToBan.Value)} and delete their latest messages?", components:components);
+			$"Are you sure you want to yeet {userToBan.MentionUser()} and delete their latest messages?", components:components);
 		
-		return Result.FromSuccess();
+		return Success;
 	}
 
 	[Command("ban")]
 	[Ephemeral]
 	public async Task<Result> Ban(IUser user, int days, [Greedy]string reason) {
-		if(_commandContext.Context is not InteractionContext context) return Result.FromSuccess();
-		if(!context.Member.HasValue) return Result.FromSuccess();
-		if (!context.Member.Value.Permissions.Value.HasPermission(DiscordPermission.BanMembers)) {
+		if(_commandContext.Context is not InteractionContext { Member: { HasValue: true, Value: var member } } context) 
+			return Success;
+		if (!member.Permissions.Value.HasPermission(DiscordPermission.BanMembers)) {
 			await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token, "You dont have the permission to ban people :V");
-			return Result.FromSuccess();
+			return Success;
 		}
 		
 		var components = new[] {
@@ -84,34 +83,38 @@ public class TempBan: CommandGroup, IResponder<IInteractionCreate> {
 		};
 		
 		await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token, 
-			$"Are you sure you want to ban {MentionUtils.MentionUser(user.ID.Value)} for {days} days because of \"{reason}\"?", 
+			$"Are you sure you want to ban {user.Mention()} for {days} days because of \"{reason}\"?", 
 			components:components);
 		
-		return Result.FromSuccess();
+		return Success;
 	}
 
 	public async Task<Result> RespondAsync(IInteractionCreate interaction, CancellationToken ct = new()) {
-		if(!interaction.Data.HasValue || !interaction.Member.HasValue) return Result.FromSuccess();
-		var data = interaction.Data.Value;
-		var member = interaction.Member.Value;
+		if(interaction is not {Data: {HasValue: true, Value: var data}, Member: {HasValue: true, Value: var member}}) 
+			return Success;
+		
 		var matchYeet = Regex.Match(data.CustomID.Value, @"^yeet\|([0-9]+)$");
 		
 		if (matchYeet.Success) {
-			if (!member.Permissions.Value.HasPermission(DiscordPermission.BanMembers)) {
+			if (member.Permissions.Nullsy()?.HasPermission(DiscordPermission.BanMembers) == false) {
 				await _interactionApi.CreateFollowupMessageAsync(interaction.ApplicationID, interaction.Token, 
 					"You dont have the permission to ban people (and how did you even access this menu?)");
-				return Result.FromSuccess();
+				return Success;
 			}
 			var victim = ulong.Parse(matchYeet.Groups[1].Value);
 			await _guildAPI.CreateGuildBanAsync(Program.Settings.Server, new Snowflake(victim), 1, "spam");
 			await _interactionApi.CreateInteractionResponseAsync(interaction.ID, interaction.Token,
 				new InteractionResponse(InteractionCallbackType.ChannelMessageWithSource, 
-					new InteractionCallbackData(Content: $"{MentionUtils.MentionUser(victim)} was removed and their last day of messages deleted")));
-			return Result.FromSuccess();
+					new InteractionCallbackData(Content: $"{victim.MentionUser()} was removed and their last day of messages deleted")));
 		}
 
 		var matchBan = Regex.Match(data.CustomID.Value, @"^ban\|([0-9]+)\|([0-9]+)\|(.*)$");
 		if (matchBan.Success) {
+			if (member.Permissions.Nullsy()?.HasPermission(DiscordPermission.BanMembers) == false) {
+				await _interactionApi.CreateFollowupMessageAsync(interaction.ApplicationID, interaction.Token, 
+					"You dont have the permission to ban people (and how did you even access this menu?)");
+				return Success;
+			}
 			var user = ulong.Parse(matchBan.Groups[1].Value);
 			var time = int.Parse(matchBan.Groups[2].Value);
 			var reason = matchBan.Groups[3].Value;
@@ -130,7 +133,7 @@ public class TempBan: CommandGroup, IResponder<IInteractionCreate> {
 					                                     $"because: {reason}")));
 		}
 		
-		return Result.FromSuccess();
+		return Success;
 	}
 
 	public async Task CheckBans() {

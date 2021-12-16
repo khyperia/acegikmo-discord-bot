@@ -22,12 +22,12 @@ internal class DeleteEcho : IResponder<IMessageDelete> {
         var messageId = delete.ID;
         var channelId = delete.ChannelID;
         var guildId = delete.GuildID;
-        if (guildId.HasValue && guildId.IsAcegikmo() && channelId != Settings.DeletedMsgs) {
+        if (guildId.IsAcegikmo() && channelId != Settings.DeletedMsgs) {
             var modChannel = Settings.DeletedMsgs;
             if (_log.TryGetMessage(messageId.Value, out var message))
             {
                 var after = _log.TryGetPreviousMessage(messageId.Value, channelId.Value, out var previous)
-                    ? $" after <https://discordapp.com/channels/{guildId.Value.Value}/{previous.ChannelId}/{previous.MessageId}>"
+                    ? $" after <https://discordapp.com/channels/{Server}/{previous.ChannelId}/{previous.MessageId}>"
                     : "";
                 var toSend = $"Message by {MentionUtils.MentionUser(message.AuthorId)} deleted in {MentionUtils.MentionChannel(message.ChannelId)}{after}:\n{message.Message}";
                 Console.WriteLine(toSend);
@@ -38,6 +38,6 @@ internal class DeleteEcho : IResponder<IMessageDelete> {
                 await _channelAPI.CreateMessageAsync(modChannel, $"Message deleted, but not found in DB: {messageId.Value}", ct: ct);
             }
         }
-        return Result.FromSuccess();
+        return Success;
     }
 }

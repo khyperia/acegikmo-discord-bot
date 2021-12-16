@@ -28,7 +28,7 @@ internal class PronounCommand: CommandGroup, IResponder<IMessageCreate>, IRespon
     private readonly FeedbackService _feedback;
     private readonly IDiscordRestInteractionAPI _interactionApi;
 
-    private static string pronounMenu = "pronoun_menu";
+    private const string pronounMenu = "pronoun_menu";
 
     public PronounCommand(IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, 
         GamesCommand gamesCommand, ContextInjectionService  context, FeedbackService feedbackService,
@@ -44,27 +44,26 @@ internal class PronounCommand: CommandGroup, IResponder<IMessageCreate>, IRespon
     [Command("pronoun")]
     [Ephemeral]
     [Description("Lets you choose your pronoun roles")]
-    public async Task<Result> SlashCommand() {
-        if(_context.Context is not InteractionContext context) return Result.FromSuccess();
-        var member = await _guildApi.GetGuildMemberAsync(context.GuildID.Value, context.User.ID);
-        var userRoles = member.Entity.Roles;
+    public async Task<IResult> SlashCommand() {
+        if(_context.Context is not InteractionContext{Member:{HasValue:true, Value: var member}} context) 
+            return Success;
+        var userRoles = member.Roles;
         IReadOnlyList<IMessageComponent> components = GetMenuForRoles(userRoles);
         var message = await _interactionApi.CreateFollowupMessageAsync(
             context.ApplicationID, 
             context.Token, 
             "choose your pronoun roles!\n*(ping moderators if you want more pronouns to be added)*",
             components: new Optional<IReadOnlyList<IMessageComponent>>(components));//???
-        if (!message.IsSuccess) {
-            return Result.FromError(message.Error);
-        }
-        return Result.FromSuccess();
+        if (!message.IsSuccess) return message;
+        return Success;
     }
         
     public async Task<Result> RespondAsync(IInteractionCreate interaction, CancellationToken ct = new()) {
-        if(!interaction.Data.HasValue || !interaction.Member.HasValue) return Result.FromSuccess();
-        var data = interaction.Data.Value;
-        var member = interaction.Member.Value;
-        if (data.CustomID != pronounMenu) return Result.FromSuccess();
+        if(_context.Context is not InteractionContext {
+               Member:{HasValue:true, Value: var member}, 
+               Data: {CustomID: {HasValue:true, Value: pronounMenu } } data,
+           } context)
+            return Success;
         var memberRoles = (List<Snowflake>)member.Roles;
         foreach ((string name, ulong id) in Settings.pronouns) {
             var roleSf = new Snowflake(id);
@@ -72,10 +71,10 @@ internal class PronounCommand: CommandGroup, IResponder<IMessageCreate>, IRespon
             var wantsRole = data.Values.Value.Contains(name);
             if (hasRole != wantsRole) {
                 if (wantsRole) {
-                    await _guildApi.AddGuildMemberRoleAsync(Settings.Server, member.User.Value.ID, roleSf);
+                    await _guildApi.AddGuildMemberRoleAsync(Settings.Server, member.User.Nullsy()?.ID ?? default, roleSf);
                     memberRoles.Add(roleSf);
                 } else {
-                    await _guildApi.RemoveGuildMemberRoleAsync(Settings.Server, member.User.Value.ID, roleSf);
+                    await _guildApi.RemoveGuildMemberRoleAsync(Settings.Server, member.User.Nullsy()?.ID ?? default, roleSf);
                     memberRoles.Remove(roleSf);
                 } 
             }
@@ -86,7 +85,7 @@ internal class PronounCommand: CommandGroup, IResponder<IMessageCreate>, IRespon
         await _interactionApi.CreateInteractionResponseAsync(interaction.ID, interaction.Token, 
             new InteractionResponse(InteractionCallbackType.UpdateMessage, new InteractionCallbackData
                 (Components: new Optional<IReadOnlyList<IMessageComponent>>(components))));
-        return Result.FromSuccess();
+        return Success;
     }
 
     public IReadOnlyList<IMessageComponent> GetMenuForRoles(IReadOnlyList<Snowflake> userRoles) {
@@ -127,6 +126,6 @@ internal class PronounCommand: CommandGroup, IResponder<IMessageCreate>, IRespon
                 }
             }
         }
-        return Result.FromSuccess();
+        return Success;
     }
 }

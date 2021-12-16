@@ -33,18 +33,19 @@ internal class TimingThing: IResponder<IMessageCreate> {
     }
 
     public async Task<Result> RespondAsync(IMessageCreate message, CancellationToken ct = new()) {
-        if (DateTime.UtcNow > _nextUpdate && message.GuildID.HasValue && message.GuildID.IsAcegikmo()) {
+        if (DateTime.UtcNow > _nextUpdate) {
             await DoTimer();
         }
-        else if (message.Author.IsAshl() && message.Content == "!dotimer" && message.GuildID.IsAcegikmo()) {
+        else if (message.Author.IsAshl() && message.Content == "!dotimer") {
             await DoTimer();
         }
-        return Result.FromSuccess();
+        return Success;
     }
 
     private async Task DoTimer() {
         var lewdchannel = Settings.Lewd;
-        await _channelAPI.CreateMessageAsync(lewdchannel, "Please make sure you've read the topic of this channel, as this channel is \U0001F525*spicy*\U0001F525 and it's *important*.");
+        await _channelAPI.CreateMessageAsync(lewdchannel, 
+            "Please make sure you've read the topic of this channel, as this channel is \U0001F525*spicy*\U0001F525 and it's *important*.");
         SetNextUpdate();
         var modchannel = Settings.DeletedMsgs;
         await _memberizer.Memberizer(_log, modchannel, Settings.Server, 50);

@@ -23,6 +23,6 @@ internal class HelpCommand: IResponder<IMessageCreate> {
 !games - list all games currently registered in the list of pingable games
 !pronoun <she/her, he/him, they/them, him/her/they> - gives you a pronoun role. run again to remove.");
         }
-        return Result.FromSuccess();
+        return Success;
     }
 }

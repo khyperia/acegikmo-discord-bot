@@ -36,12 +36,12 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
 
     private Dictionary<ulong, Dictionary<string, List<ulong>>> AllGameDicts => _json.Data;
     private Dictionary<string, List<ulong>>? GameDict(Optional<Snowflake> guildID) {
-        if (!guildID.HasValue) return null;
-        if (AllGameDicts.TryGetValue(guildID.Value.Value, out var dict))
+        if (guildID is not { HasValue: true, Value: var guild }) return null;
+        if (AllGameDicts.TryGetValue(guild.Value, out var dict))
             return dict;
 
         var result = new Dictionary<string, List<ulong>>();
-        AllGameDicts.Add(guildID.Value.Value, result);
+        AllGameDicts.Add(guild.Value, result);
         return result;
     }
 
@@ -59,9 +59,9 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
     [Ephemeral]
     [Description("Join a new or existing game")]
     public async Task<Result> AddGame([Description("Game to add")]string game) {
-        if(_commandContext.Context is not InteractionContext context) return Result.FromSuccess();
+        if(_commandContext.Context is not InteractionContext context) return Success;
         var gameDict = GameDict(Program.Settings.Server);
-        if (gameDict == null) return Result.FromSuccess();
+        if (gameDict == null) return Success;
         game = game.ToLower();
         
         if (!gameDict.TryGetValue(game, out var list)) 
@@ -76,23 +76,23 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
             await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token,
                 $"You joined {game.Replace("@", "@\u200B")}");
         }
-        return Result.FromSuccess();
+        return Success;
     }
     
     [Command("leave")]
     [Ephemeral]
     [Description("Leave a game")]
     public async Task<Result> DelGame([Description("Game to leave")]string game) {
-        if(_commandContext.Context is not InteractionContext context) return Result.FromSuccess();
+        if(_commandContext.Context is not InteractionContext context) return Success;
         var gameDict = GameDict(Program.Settings.Server);
-        if (gameDict == null) return Result.FromSuccess();
+        if (gameDict == null) return Success;
         game = game.ToLower();
         var user = context.User.ID.Value;
 
         if (!gameDict.TryGetValue(game, out var list) || !list.Remove(user)) {
             await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token,
                 $"You're not in the list for {game.Replace("@", "@\u200B")}");
-            return Result.FromSuccess();
+            return Success;
         }
 
         if (list.Count == 0) gameDict.Remove(game);
@@ -100,50 +100,50 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
         await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token,
             $"You left {game.Replace("@", "@\u200B")}");
         
-        return Result.FromSuccess();
+        return Success;
     }
     
     [Command("ping")]
     [Description("Ping a game to look for players")]
     public async Task<Result> PingGame([Description("Game to ping")]string game) {
-        if(_commandContext.Context is not InteractionContext context) return Result.FromSuccess();
+        if(_commandContext.Context is not InteractionContext context) return Success;
         var gameDict = GameDict(Program.Settings.Server);
-        if (gameDict == null) return Result.FromSuccess();
+        if (gameDict == null) return Success;
         game = game.ToLower();
         var user = context.User.ID.Value;
 
         if (!gameDict.TryGetValue(game, out var list) ) {
             await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token,
                 $"Noone is in the list for {game.Replace("@", "@\u200B")}");
-            return Result.FromSuccess();
+            return Success;
         }
 
         if (!list.Contains(user)) {
             await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token,
                 $"You're not in the list for {game.Replace("@", "@\u200B")}");
-            return Result.FromSuccess();
+            return Success;
         }
         
         if (list.Count == 1) {
             await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token,
                 $"You're the only one in the list for {game.Replace("@", "@\u200B")}");
-            return Result.FromSuccess();
+            return Success;
         }
 
         await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token,
             $"{MentionUtils.MentionUser(user)} wants to play {game.Replace("@", "@\u200B")}!\n" +
             $"{string.Join(", ", list.Where(id => id != user).Select(MentionUtils.MentionUser))}");
         
-        return Result.FromSuccess();
+        return Success;
     }
 
     [Command("list")]
     [Ephemeral]
     [Description("list all games")]
     public async Task<Result> ListGames() {
-        if(_commandContext.Context is not InteractionContext context) return Result.FromSuccess();
+        if(_commandContext.Context is not InteractionContext context) return Success;
         var gameDict = GameDict(Program.Settings.Server);
-        if (gameDict == null) return Result.FromSuccess();
+        if (gameDict == null) return Success;
         var msg = $"All pingable games (and number of people): " +
                 $"{string.Join(", ", gameDict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key.Replace("@", "@\u200B")} ({kvp.Value.Count})"))}";
         var maxLength = 2000;
@@ -154,15 +154,15 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
             msg = msg[maxLength..];
         }
         await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token, msg);
-        return Result.FromSuccess();
+        return Success;
     }
     
     [Command("list-public")]
     [Description("list all games publically")]
     public async Task<Result> ShowGames() {
-        if(_commandContext.Context is not InteractionContext context) return Result.FromSuccess();
+        if(_commandContext.Context is not InteractionContext context) return Success;
         var gameDict = GameDict(Program.Settings.Server);
-        if (gameDict == null) return Result.FromSuccess();
+        if (gameDict == null) return Success;
         var msg = $"All pingable games (and number of people): " +
                   $"{string.Join(", ", gameDict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key.Replace("@", "@\u200B")} ({kvp.Value.Count})"))}";
 
@@ -176,25 +176,25 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
         }
         
         await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token, msg);
-        return Result.FromSuccess();
+        return Success;
     }
     
     [Command("own")]
     [Ephemeral]
     [Description("see your own games")]
     public async Task<Result> MyGames() {
-        if(_commandContext.Context is not InteractionContext context) return Result.FromSuccess();
+        if(_commandContext.Context is not InteractionContext context) return Success;
         var gameDict = GameDict(Program.Settings.Server);
-        if (gameDict == null) return Result.FromSuccess();
+        if (gameDict == null) return Success;
         var user = context.User.ID.Value;
         var result = string.Join(", ", gameDict.Where(kvp => kvp.Value.Contains(user))
             .Select(kvp => kvp.Key.Replace("@", "@\u200B")).OrderBy(x => x));
         if (string.IsNullOrEmpty(result)) {
             await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token, "You're not in any game lists yet.");
-            return Result.FromSuccess();
+            return Success;
         }
         await _interactionApi.CreateFollowupMessageAsync(context.ApplicationID, context.Token, "Your games are: " + result);
-        return Result.FromSuccess();
+        return Success;
     }
 
     public async Task<Result> RespondAsync(IMessageCreate message, CancellationToken ct = new()) {
@@ -242,16 +242,16 @@ internal class GamesCommand : CommandGroup, IResponder<IMessageCreate> {
             await DelUserGame(message, cmd);
         }
         if (message.Author.IsAshl() && message.Content == "!downloadusers" && message.GuildID.HasValue) {
-            var getGuild = await _guildAPI.GetGuildAsync(message.GuildID.Value, true);
+            var getGuild = await _guildAPI.GetGuildAsync(Server, true);
             if(!getGuild.IsSuccess) return Result.FromError(getGuild.Error);
             var guild = getGuild.Entity;
             var getChannel = await _discordAPI.GetChannelAsync(message.ChannelID);
             if(!getChannel.IsSuccess) return Result.FromError(getChannel.Error);
             var channel= getChannel.Entity;
-            var response = $"mc={guild.MemberCount.Value} amc={guild.ApproximateMemberCount.Value} cmc={channel.MemberCount} manual count={guild.Members.Value.Count}";
+            var response = $"mc={guild.MemberCount.Nullable()} amc={guild.ApproximateMemberCount.Nullable()} cmc={channel.MemberCount} manual count={guild.Members.Nullsy()?.Count}";
             await _discordAPI.CreateMessageAsync(message.ChannelID, response);
         }
-        return Result.FromSuccess();
+        return Success;
     }
 
     private async Task AddGame(IMessageCreate message, string game)

@@ -108,12 +108,12 @@ internal class Log : IDisposable, IResponder<IMessageCreate>, IResponder<IMessag
         }
 
         await LogMessage(message);
-        return Result.FromSuccess();
+        return Success;
     }
 
     public async Task<Result> RespondAsync(IMessageUpdate update, CancellationToken ct = new CancellationToken()) {
         await LogMessage(update);
-        return Result.FromSuccess();
+        return Success;
     }
 
     private async Task LogMessage(IPartialMessage message) {
@@ -122,12 +122,17 @@ internal class Log : IDisposable, IResponder<IMessageCreate>, IResponder<IMessag
         }
 
         var content = Format(message);
-        if (content == "" && message.Author.Value.ID.Value == 0) {
+        if (content == "" && (message.Author.Nullsy()?.ID.Value ?? 0) == 0) {
+            if(message is {
+                   GuildID:{HasValue:true, Value:var guild}, 
+                   ChannelID:{HasValue:true, Value:var channel},
+                   ID:{HasValue:true, Value:var messageId}
+               })
             Console.WriteLine(
                 $"Empty content/author ID message ({message.GetType().FullName}, " +
                 $"type {(message as IMessage)?.Type}, " +
-                $"source {message.Author.Value.ID.Value}): " +
-                $"https://discordapp.com/channels/{message.GuildID.Value.Value}/{message.ChannelID.Value.Value}/{message.ID.Value.Value}");
+                $"source {message.Author.Nullsy()?.ID.Value.ToString() ?? "null"}): " +
+                $"https://discordapp.com/channels/{guild.Value}/{channel.Value}/{messageId.Value}");
             return;
         }
 
@@ -194,9 +199,9 @@ internal class Log : IDisposable, IResponder<IMessageCreate>, IResponder<IMessag
     }
 
     private static string Format(IPartialMessage message) {
-        var result = string.IsNullOrWhiteSpace(message.Content.Value) ? "" : message.Content.Value;
-        if (message.Attachments.HasValue) {
-            foreach (var attachment in message.Attachments.Value) {
+        var result = string.IsNullOrWhiteSpace(message.Content.Nullsy()) ? "" : message.Content.Value;
+        if (message.Attachments is { HasValue: true, Value:var attachments }) {
+            foreach (var attachment in attachments) {
                 result += "\n" + attachment.ProxyUrl;
             }
         }

@@ -31,6 +31,6 @@ internal class EchoCommand : IResponder<IMessageCreate> {
             var theSnowflake = Snowflake.CreateTimestampSnowflake(thingyTime);
             await _channelAPI.CreateMessageAsync(message.ChannelID, theSnowflake.ToString());
         }
-        return Result.FromSuccess();
+        return Success;
     }
 }
