@@ -127,19 +127,19 @@ internal class GamesCommand
             case "addgame":
                 {
                     var game = (string)command.Data.Options.First().Value;
-                    await AddGame(command, game);
+                    await AddGame(command, game.ToLower());
                 }
                 break;
             case "delgame":
                 {
                     var game = (string)command.Data.Options.First().Value;
-                    await DelGame(command, game);
+                    await DelGame(command, game.ToLower());
                 }
                 break;
             case "pinggame":
                 {
                     var game = (string)command.Data.Options.First().Value;
-                    await PingGame(command, game);
+                    await PingGame(command, game.ToLower());
                 }
                 break;
             case "games":
