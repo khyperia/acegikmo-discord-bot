@@ -75,7 +75,7 @@ internal class Program : IDisposable
         _client.MessageReceived += new TimingThing(tmpBan, _log).MessageReceivedAsync;
         _client.MessageReceived += _log.MessageReceivedAsync;
         _client.MessageUpdated += _log.MessageUpdatedAsync;
-        _client.MessageReceived += TwitterBonker.MessageReceivedAsync;
+        _client.MessageReceived += new TwitterBonker().MessageReceivedAsync;
 
         await _client.LoginAsync(TokenType.Bot, Config.token);
         await _client.StartAsync();
