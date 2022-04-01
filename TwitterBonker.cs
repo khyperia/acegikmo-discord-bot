@@ -21,20 +21,7 @@ internal class TwitterBonker
             var queryValues = HttpUtility.ParseQueryString(uri.Query);
             if (queryValues.Get("t") != null || queryValues.Get("s") != null)
             {
-                if (!_json.Data.TryGetValue(message.Author.Id, out var count))
-                {
-                    count = 0;
-                }
-                count++;
-                _json.Data[message.Author.Id] = count;
-                _json.Save();
-
-                string msg = count switch
-                {
-                    < 5 => $"pls remove tracking info from twitter links <3 like so: <https://twitter.com{uri.AbsolutePath}>",
-                    < 10 => $"hey, {message.Author.Mention}, it'd be super swell of you to remove tracking info from twitter links before posting next time! <https://twitter.com{uri.AbsolutePath}>",
-                    _ => $"{message.Author.Mention}, you've not removed tracking info from twitter links {count} times already, please do it next time maybe? <3 <https://twitter.com{uri.AbsolutePath}>",
-                };
+                string msg = $"link without tracking blob: <https://twitter.com{uri.AbsolutePath}>";
                 await message.Channel.SendMessageAsync(msg);
             }
         }
