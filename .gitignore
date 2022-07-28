@@ -6,4 +6,5 @@ games.json
 memberizer.json
 log.db
 /.vs/
+/.idea/
 /.vscode/

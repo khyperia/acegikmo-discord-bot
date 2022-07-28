@@ -12,7 +12,7 @@ internal class TmpBan
 {
     private readonly Json<Dictionary<ulong, long>> BanData = new("tmpban.json");
 
-    public static SlashCommandProperties[] Commands = {
+    public static readonly SlashCommandProperties[] Commands = {
         new SlashCommandBuilder()
             .WithName("tmpban")
             .WithDescription("Temporarily ban a user")
@@ -46,7 +46,7 @@ internal class TmpBan
         {
             return;
         }
-        if (!sender.Roles.Any(role => role.Id == MODERATOR_ROLE))
+        if (sender.Roles.All(role => role.Id != MODERATOR_ROLE))
         {
             await command.RespondAsync("noh >:(");
             return;
@@ -61,7 +61,7 @@ internal class TmpBan
             return;
         }
 
-        var days = (int)options[1].Value;
+        var days = Convert.ToInt64(options[1].Value);
         var reason = options.Length >= 3 ? (string?)options[2].Value : null;
         var newTime = DateTimeOffset.UtcNow.AddDays(days);
         string message;
@@ -92,7 +92,7 @@ internal class TmpBan
         {
             return;
         }
-        if (!sender.Roles.Any(role => role.Id == MODERATOR_ROLE))
+        if (sender.Roles.All(role => role.Id != MODERATOR_ROLE))
         {
             await command.RespondAsync("noh >:(");
             return;
