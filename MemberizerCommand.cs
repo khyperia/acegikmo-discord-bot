@@ -1,6 +1,5 @@
 using Discord;
 using Discord.WebSocket;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using static AcegikmoDiscordBot.Program;
@@ -20,10 +19,10 @@ internal class MemberizerCommand
     public static async Task Memberizer(Log log, SocketTextChannel channel, ulong desiredCount)
     {
         var guild = channel.Guild;
-        var gucciUsers = new Dictionary<SocketGuildUser, ulong>();
         var nonmembers = guild.Users.Where(user => !IsMember(user)).Select(user => user.Id).ToList();
         var counts = log.MessageCounts(nonmembers, desiredCount);
-        var msg = string.Join("\n", counts.Select(item => $"{MentionUtils.MentionUser(item.authorId)} has sent {item.count} messages"));
+        var msg = string.Join("\n",
+            counts.Select(item => $"{MentionUtils.MentionUser(item.authorId)} has sent {item.count} messages"));
         if (!string.IsNullOrEmpty(msg))
         {
             await channel.SendMessageAsync(msg);
@@ -39,15 +38,20 @@ internal class MemberizerCommand
         {
             await Memberizer(_log, channel, desiredCount);
         }
-        if (message.Author.Id == ASHL && message.Content == "!membercount" && message.Channel is SocketGuildChannel ch)
+
+        if (message.Author.Id == ASHL && message is { Content: "!membercount", Channel: SocketGuildChannel ch })
         {
-            var roles = string.Join(", ", ch.Guild.Roles.Select(role => $"{role.Name.Replace("@everyone", "at-everyone")}={role.Members.Count()}"));
+            var roles = string.Join(", ",
+                ch.Guild.Roles.Select(role =>
+                    $"{role.Name.Replace("@everyone", "at-everyone")}={role.Members.Count()}"));
             var msg = $"total={ch.Guild.MemberCount}, {roles}";
             await message.Channel.SendMessageAsync(msg);
         }
-        if (message.Author.Id == ASHL && message.Content == "!roles" && message.Channel is SocketGuildChannel ch2)
+
+        if (message.Author.Id == ASHL && message is { Content: "!roles", Channel: SocketGuildChannel ch2 })
         {
-            var msg = string.Join(", ", ch2.Guild.Roles.Select(role => $"{role.Name.Replace("@everyone", "at-everyone")}={role.Id}"));
+            var msg = string.Join(", ",
+                ch2.Guild.Roles.Select(role => $"{role.Name.Replace("@everyone", "at-everyone")}={role.Id}"));
             await message.Channel.SendMessageAsync(msg);
         }
     }
@@ -61,6 +65,7 @@ internal class MemberizerCommand
                 return true;
             }
         }
+
         return false;
     }
 }

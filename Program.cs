@@ -14,8 +14,7 @@ namespace AcegikmoDiscordBot;
 [DataContract]
 internal class ConfigClass
 {
-    [DataMember]
-    internal string token;
+    [DataMember] internal string token;
 }
 #pragma warning restore CS0649
 #pragma warning restore CS8618 // Non-nullable field is uninitialized.
@@ -36,7 +35,7 @@ internal class Program : IDisposable
     {
         using var stream = File.OpenRead("config.json");
         var json = new DataContractJsonSerializer(typeof(ConfigClass));
-        return (ConfigClass)(json.ReadObject(stream) ?? throw new Exception("Deserialization of config.json failed"));
+        return (ConfigClass)(json.ReadObject(stream) ?? throw new("Deserialization of config.json failed"));
     }
 
     private static async Task Main()
@@ -47,7 +46,7 @@ internal class Program : IDisposable
 
     private Program()
     {
-        _client = new DiscordSocketClient(new DiscordSocketConfig
+        _client = new(new()
         {
             GatewayIntents =
                 GatewayIntents.Guilds |
@@ -55,13 +54,17 @@ internal class Program : IDisposable
                 GatewayIntents.GuildMessages |
                 GatewayIntents.GuildMessageReactions,
         });
-        _log = new Log();
+        _log = new();
         Console.CancelKeyPress += (sender, args) => Dispose();
     }
 
     private async Task Run()
     {
-        _client.Log += a => { Console.WriteLine(a); return Task.CompletedTask; };
+        _client.Log += a =>
+        {
+            Console.WriteLine(a);
+            return Task.CompletedTask;
+        };
         _client.MessageDeleted += new DeleteEcho(_log).MessageDeletedAsync;
         _client.MessageReceived += EchoCommand.MessageReceivedAsync;
         var games = new GamesCommand();
@@ -75,7 +78,7 @@ internal class Program : IDisposable
         _client.MessageReceived += new TimingThing(tmpBan, _log).MessageReceivedAsync;
         _client.MessageReceived += _log.MessageReceivedAsync;
         _client.MessageUpdated += _log.MessageUpdatedAsync;
-        _client.MessageReceived += new TwitterBonker().MessageReceivedAsync;
+        _client.MessageReceived += TwitterBonker.MessageReceivedAsync;
 
         await _client.LoginAsync(TokenType.Bot, Config.token);
         await _client.StartAsync();
@@ -85,9 +88,9 @@ internal class Program : IDisposable
             var acegikmo = _client.GetGuild(ACEGIKMO_SERVER);
             var commands = await acegikmo.BulkOverwriteApplicationCommandAsync(
                 GamesCommand.Commands
-                .Concat(PronounCommand.Commands)
-                .Concat(TmpBan.Commands)
-                .ToArray()
+                    .Concat(PronounCommand.Commands)
+                    .Concat(TmpBan.Commands)
+                    .ToArray()
             );
         };
 

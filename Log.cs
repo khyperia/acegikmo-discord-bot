@@ -45,6 +45,7 @@ internal class Log : IDisposable
                         break;
                 }
             }
+
             return message && channel && author && content;
         }
     }
@@ -53,10 +54,11 @@ internal class Log : IDisposable
 
     public Log()
     {
-        _sql = new SqliteConnection("Data Source=log.db");
+        _sql = new("Data Source=log.db");
         _sql.Open();
         var cmd = _sql.CreateCommand();
-        cmd.CommandText = "CREATE TABLE IF NOT EXISTS log(message_id INTEGER PRIMARY KEY NOT NULL, channel_id INTEGER NOT NULL, author_id INTEGER NOT NULL, message TEXT NOT NULL)";
+        cmd.CommandText =
+            "CREATE TABLE IF NOT EXISTS log(message_id INTEGER PRIMARY KEY NOT NULL, channel_id INTEGER NOT NULL, author_id INTEGER NOT NULL, message TEXT NOT NULL)";
         cmd.ExecuteNonQuery();
     }
 
@@ -79,7 +81,7 @@ internal class Log : IDisposable
             var thing = message.Content["!sql ".Length..];
             var scaryCmd = _sql.CreateCommand();
             scaryCmd.CommandText = thing; // spook
-            using var scaryResult = scaryCmd.ExecuteReader();
+            await using var scaryResult = await scaryCmd.ExecuteReaderAsync();
             var msg = new StringBuilder();
             while (scaryResult.Read())
             {
@@ -87,32 +89,39 @@ internal class Log : IDisposable
                 {
                     msg.Append('\n');
                 }
+
                 if (msg.Length > 1000)
                 {
                     msg.Append("Too many results.");
                     break;
                 }
+
                 for (var i = 0; i < scaryResult.FieldCount; i++)
                 {
                     if (i != 0)
                     {
                         msg.Append(' ');
                     }
+
                     msg.Append(scaryResult.GetName(i));
                     msg.Append('=');
                     msg.Append(scaryResult.GetValue(i));
                 }
             }
+
             if (msg.Length == 0)
             {
                 msg.Append("No results.");
             }
+
             await message.Channel.SendMessageAsync(msg.ToString());
         }
+
         LogMessage(message);
     }
 
-    internal Task MessageUpdatedAsync(Cacheable<IMessage, ulong> original, SocketMessage newMessage, ISocketMessageChannel channel)
+    internal Task MessageUpdatedAsync(Cacheable<IMessage, ulong> original, SocketMessage newMessage,
+        ISocketMessageChannel channel)
     {
         LogMessage(newMessage);
         return Task.CompletedTask;
@@ -124,12 +133,15 @@ internal class Log : IDisposable
         {
             return;
         }
+
         var content = Format(message);
         if (content == "" && message.Author.Id == 0)
         {
-            Console.WriteLine($"Empty content/author ID message ({message.GetType().FullName}, type {(message as IMessage)?.Type}, source {message.Source}): https://discordapp.com/channels/{(message.Channel as IGuildChannel)?.GuildId ?? 0}/{message.Channel.Id}/{message.Id}");
+            Console.WriteLine(
+                $"Empty content/author ID message ({message.GetType().FullName}, type {((IMessage)message).Type}, source {message.Source}): https://discordapp.com/channels/{(message.Channel as IGuildChannel)?.GuildId ?? 0}/{message.Channel.Id}/{message.Id}");
             return;
         }
+
         using var cmd = _sql.CreateCommand();
         cmd.CommandText = "INSERT OR REPLACE INTO log VALUES(@message_id, @channel_id, @author_id, @message)";
         cmd.Parameters.AddWithValue("message_id", (long)message.Id);
@@ -159,7 +171,8 @@ internal class Log : IDisposable
     public bool TryGetPreviousMessage(ulong messageId, ulong channelId, out MessageDb message)
     {
         using var cmd = _sql.CreateCommand();
-        cmd.CommandText = "SELECT * FROM log WHERE channel_id = @channel_id AND message_id < @message_id ORDER BY message_id DESC LIMIT 1";
+        cmd.CommandText =
+            "SELECT * FROM log WHERE channel_id = @channel_id AND message_id < @message_id ORDER BY message_id DESC LIMIT 1";
         cmd.Parameters.AddWithValue("channel_id", (long)channelId);
         cmd.Parameters.AddWithValue("message_id", (long)messageId);
         var reader = cmd.ExecuteReader();
@@ -177,7 +190,8 @@ internal class Log : IDisposable
     public IEnumerable<(ulong authorId, ulong count)> MessageCounts(IEnumerable<ulong> userIds, ulong limit)
     {
         using var cmd = _sql.CreateCommand();
-        cmd.CommandText = $"SELECT author_id, COUNT(*) as message_count FROM log WHERE author_id IN ({string.Join(",", userIds)}) GROUP BY author_id HAVING COUNT(*) > {limit} ORDER BY message_count DESC";
+        cmd.CommandText =
+            $"SELECT author_id, COUNT(*) as message_count FROM log WHERE author_id IN ({string.Join(",", userIds)}) GROUP BY author_id HAVING COUNT(*) > {limit} ORDER BY message_count DESC";
         var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
@@ -195,6 +209,7 @@ internal class Log : IDisposable
                         break;
                 }
             }
+
             if (author != 0 && count != 0)
             {
                 yield return (author, count);
@@ -205,13 +220,14 @@ internal class Log : IDisposable
     private static string Format(SocketMessage message)
     {
         var result = string.IsNullOrWhiteSpace(message.Content) ? "" : message.Content;
-        if (message.Attachments != null && !(message.Attachments is ImmutableArray<Attachment> array && array.IsDefault))
+        if (message.Attachments is ImmutableArray<Attachment> { IsDefault: false })
         {
             foreach (var attachment in message.Attachments)
             {
                 result += "\n" + attachment.ProxyUrl;
             }
         }
+
         return result;
     }
 }

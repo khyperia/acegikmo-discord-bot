@@ -14,44 +14,44 @@ internal class GamesCommand
     private readonly Json<Dictionary<ulong, Dictionary<string, List<ulong>>>> _json = new("games.json");
 
     private Dictionary<ulong, Dictionary<string, List<ulong>>> AllGameDicts => _json.Data;
+
     private Dictionary<string, List<ulong>>? GameDict(SocketMessage message)
     {
         if (message.Channel is not SocketGuildChannel chan)
         {
             return null;
         }
-        else if (AllGameDicts.TryGetValue(chan.Guild.Id, out var dict))
+
+        if (AllGameDicts.TryGetValue(chan.Guild.Id, out var dict))
         {
             return dict;
         }
-        else
-        {
-            var result = new Dictionary<string, List<ulong>>();
-            AllGameDicts.Add(chan.Guild.Id, result);
-            return result;
-        }
+
+        var result = new Dictionary<string, List<ulong>>();
+        AllGameDicts.Add(chan.Guild.Id, result);
+        return result;
     }
+
     private Dictionary<string, List<ulong>>? GameDict(SocketSlashCommand command)
     {
         if (command.Channel is not SocketGuildChannel chan)
         {
             return null;
         }
-        else if (AllGameDicts.TryGetValue(chan.Guild.Id, out var dict))
+
+        if (AllGameDicts.TryGetValue(chan.Guild.Id, out var dict))
         {
             return dict;
         }
-        else
-        {
-            var result = new Dictionary<string, List<ulong>>();
-            AllGameDicts.Add(chan.Guild.Id, result);
-            return result;
-        }
+
+        var result = new Dictionary<string, List<ulong>>();
+        AllGameDicts.Add(chan.Guild.Id, result);
+        return result;
     }
 
     private void SaveDict() => _json.Save();
 
-    public static async Task Checkmark(SocketMessage message)
+    private static async Task Checkmark(SocketMessage message)
     {
         var obtainedMessage = await message.Channel.GetMessageAsync(message.Id);
         if (obtainedMessage is RestUserMessage rest)
@@ -71,29 +71,34 @@ internal class GamesCommand
             var game = message.Content["!nukegame ".Length..].ToLower();
             await NukeGame(message, game);
         }
+
         if (message.Author.Id == ASHL && message.Content.StartsWith("!nukeuser "))
         {
             var cmd = message.Content["!nukeuser ".Length..].ToLower();
             await NukeUser(message, cmd);
         }
+
         if (message.Author.Id == ASHL && message.Content.StartsWith("!addusergame "))
         {
             var cmd = message.Content["!addusergame ".Length..];
             await AddUserGame(message, cmd);
         }
+
         if (message.Author.Id == ASHL && message.Content.StartsWith("!delusergame "))
         {
             var cmd = message.Content["!delusergame ".Length..];
             await DelUserGame(message, cmd);
         }
-        if (message.Author.Id == ASHL && message.Content == "!downloadusers" && message.Channel is SocketGuildChannel chan)
+
+        if (message.Author.Id == ASHL && message is { Content: "!downloadusers", Channel: SocketGuildChannel chan })
         {
             await chan.Guild.DownloadUsersAsync();
-            await message.Channel.SendMessageAsync($"mc={chan.Guild.MemberCount} dmc={chan.Guild.DownloadedMemberCount} count={chan.Users.Count} ham={chan.Guild.HasAllMembers}");
+            await message.Channel.SendMessageAsync(
+                $"mc={chan.Guild.MemberCount} dmc={chan.Guild.DownloadedMemberCount} count={chan.Users.Count} ham={chan.Guild.HasAllMembers}");
         }
     }
 
-    public static SlashCommandProperties[] Commands =
+    public static readonly SlashCommandProperties[] Commands =
     {
         new SlashCommandBuilder()
             .WithName("addgame")
@@ -162,10 +167,12 @@ internal class GamesCommand
         {
             return;
         }
+
         if (!gameDict.TryGetValue(game, out var list))
         {
-            list = gameDict[game] = new List<ulong>();
+            list = gameDict[game] = new();
         }
+
         if (list.Contains(command.User.Id))
         {
             await command.RespondAsync($"You're already in {game.Replace("@", "@\u200B")}");
@@ -185,6 +192,7 @@ internal class GamesCommand
         {
             return;
         }
+
         if (!gameDict.TryGetValue(game, out var list) || !list.Remove(command.User.Id))
         {
             await command.RespondAsync($"You are not in the list for {game.Replace("@", "@\u200B")}");
@@ -195,6 +203,7 @@ internal class GamesCommand
             {
                 gameDict.Remove(game);
             }
+
             SaveDict();
             await command.RespondAsync($"Removed you from the ping list for {game}");
         }
@@ -207,13 +216,15 @@ internal class GamesCommand
         {
             return;
         }
+
         if (!gameDict.TryGetValue(game, out var list))
         {
             await command.RespondAsync($"Nobody's in the list for {game.Replace("@", "@\u200B")}.");
         }
         else if (!list.Contains(command.User.Id))
         {
-            await command.RespondAsync($"You are not in the list for {game.Replace("@", "@\u200B")}, so you can't ping it.");
+            await command.RespondAsync(
+                $"You are not in the list for {game.Replace("@", "@\u200B")}, so you can't ping it.");
         }
         else if (list.Count == 1)
         {
@@ -221,7 +232,8 @@ internal class GamesCommand
         }
         else
         {
-            await command.RespondAsync($"{command.User.Mention} wants to play {game.Replace("@", "@\u200B")}! {string.Join(", ", list.Where(id => id != command.User.Id).Select(MentionUtils.MentionUser))}");
+            await command.RespondAsync(
+                $"{command.User.Mention} wants to play {game.Replace("@", "@\u200B")}! {string.Join(", ", list.Where(id => id != command.User.Id).Select(MentionUtils.MentionUser))}");
         }
     }
 
@@ -232,9 +244,12 @@ internal class GamesCommand
         {
             return;
         }
-        var msg = $"All pingable games (and number of people): {string.Join(", ", gameDict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key.Replace("@", "@\u200B")} ({kvp.Value.Count})"))}";
+
+        var msg =
+            $"All pingable games (and number of people): {string.Join(", ", gameDict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key.Replace("@", "@\u200B")} ({kvp.Value.Count})"))}";
         var maxLength = 2000;
         var first = true;
+
         async Task Send(string text)
         {
             if (first)
@@ -247,12 +262,14 @@ internal class GamesCommand
                 await command.FollowupAsync(text, ephemeral: true);
             }
         }
+
         while (msg.Length > 2000)
         {
             var slice = msg[..maxLength];
             await Send(slice);
             msg = msg[maxLength..];
         }
+
         await Send(msg);
     }
 
@@ -263,7 +280,10 @@ internal class GamesCommand
         {
             return;
         }
-        var result = string.Join(", ", gameDict.Where(kvp => kvp.Value.Contains(command.User.Id)).Select(kvp => kvp.Key.Replace("@", "@\u200B")).OrderBy(x => x));
+
+        var result = string.Join(", ",
+            gameDict.Where(kvp => kvp.Value.Contains(command.User.Id)).Select(kvp => kvp.Key.Replace("@", "@\u200B"))
+                .OrderBy(x => x));
         if (string.IsNullOrEmpty(result))
         {
             await command.RespondAsync($"You're not in any games list", ephemeral: true);
@@ -281,6 +301,7 @@ internal class GamesCommand
         {
             return;
         }
+
         if (gameDict.Remove(game))
         {
             SaveDict();
@@ -299,6 +320,7 @@ internal class GamesCommand
         {
             return;
         }
+
         if (!TryParseId(cmd, out var id))
         {
             await message.Channel.SendMessageAsync("bad user ID");
@@ -312,13 +334,11 @@ internal class GamesCommand
                 changed |= kvp.Value.Remove(id);
                 if (kvp.Value.Count == 0)
                 {
-                    if (emptyKeys == null)
-                    {
-                        emptyKeys = new List<string>();
-                    }
+                    emptyKeys ??= new();
                     emptyKeys.Add(kvp.Key);
                 }
             }
+
             if (!changed)
             {
                 await message.Channel.SendMessageAsync("user not found");
@@ -332,6 +352,7 @@ internal class GamesCommand
                         gameDict.Remove(emptyKey);
                     }
                 }
+
                 SaveDict();
                 await Checkmark(message);
             }
@@ -345,6 +366,7 @@ internal class GamesCommand
         {
             return;
         }
+
         var thing = cmd.Split(' ', 2);
         if (thing.Length != 2)
         {
@@ -359,8 +381,9 @@ internal class GamesCommand
             var game = thing[1].ToLower();
             if (!gameDict.TryGetValue(game, out var list))
             {
-                list = gameDict[game] = new List<ulong>();
+                list = gameDict[game] = new();
             }
+
             if (list.Contains(id))
             {
                 await message.Channel.SendMessageAsync("user already in list");
@@ -381,12 +404,14 @@ internal class GamesCommand
         {
             return;
         }
+
         var thing = cmd.Split(' ', 2);
         if (thing.Length != 2)
         {
             await message.Channel.SendMessageAsync("!delusergame id game");
             return;
         }
+
         var game = thing[1].ToLower();
         if (!gameDict.TryGetValue(game, out var list))
         {
@@ -406,12 +431,14 @@ internal class GamesCommand
             {
                 gameDict.Remove(game);
             }
+
             SaveDict();
             await Checkmark(message);
         }
     }
 
-    private static bool TryParseId(string s, out ulong id) => ulong.TryParse(s, out id) ||
-            (s.StartsWith($"<@") && s.EndsWith(">") && ulong.TryParse(s[2..^1], out id)) ||
-            (s.StartsWith($"<@!") && s.EndsWith(">") && ulong.TryParse(s[3..^1], out id));
+    private static bool TryParseId(string s, out ulong id) =>
+        ulong.TryParse(s, out id) ||
+        (s.StartsWith($"<@") && s.EndsWith(">") && ulong.TryParse(s[2..^1], out id)) ||
+        (s.StartsWith($"<@!") && s.EndsWith(">") && ulong.TryParse(s[3..^1], out id));
 }

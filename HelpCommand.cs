@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace AcegikmoDiscordBot;
 
-internal class HelpCommand
+internal static class HelpCommand
 {
     public static async Task MessageReceivedAsync(SocketMessage message)
     {

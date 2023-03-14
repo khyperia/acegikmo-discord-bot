@@ -6,7 +6,7 @@ using static AcegikmoDiscordBot.Program;
 
 namespace AcegikmoDiscordBot;
 
-internal class EchoCommand
+internal static class EchoCommand
 {
     public static async Task MessageReceivedAsync(SocketMessage message)
     {
@@ -15,12 +15,16 @@ internal class EchoCommand
             var msg = message.Content["!echo ".Length..].Trim('`');
             await message.Channel.SendMessageAsync(msg);
         }
-        if (message.Content.StartsWith("!snowflaketotime ") && ulong.TryParse(message.Content["!snowflaketotime ".Length..], out var snowflake))
+
+        if (message.Content.StartsWith("!snowflaketotime ") &&
+            ulong.TryParse(message.Content["!snowflaketotime ".Length..], out var snowflake))
         {
             var time = SnowflakeUtils.FromSnowflake(snowflake);
             await message.Channel.SendMessageAsync(time.DateTime.ToString("r"));
         }
-        if (message.Content.StartsWith("!timetosnowflake ") && DateTime.TryParse(message.Content["!timetosnowflake ".Length..], out var thingyTime))
+
+        if (message.Content.StartsWith("!timetosnowflake ") &&
+            DateTime.TryParse(message.Content["!timetosnowflake ".Length..], out var thingyTime))
         {
             var theSnowflake = SnowflakeUtils.ToSnowflake(thingyTime);
             await message.Channel.SendMessageAsync(theSnowflake.ToString());

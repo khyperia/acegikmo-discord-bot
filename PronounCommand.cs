@@ -5,17 +5,17 @@ using System.Threading.Tasks;
 
 namespace AcegikmoDiscordBot;
 
-internal class PronounCommand
+internal static class PronounCommand
 {
-    private static readonly ulong SheHer = 506469351713538070U;
-    private static readonly ulong HeHim = 506469615841443840U;
-    private static readonly ulong TheyThem = 506469646602600459U;
-    private static readonly ulong HimHerThey = 583033959378583562U;
-    private static readonly ulong FaeFaer = 881143654973075477U;
+    private const ulong SheHer = 506469351713538070U;
+    private const ulong HeHim = 506469615841443840U;
+    private const ulong TheyThem = 506469646602600459U;
+    private const ulong HimHerThey = 583033959378583562U;
+    private const ulong FaeFaer = 881143654973075477U;
 
-    public static SlashCommandProperties[] Commands =
+    public static readonly SlashCommandProperties[] Commands =
     {
-            new SlashCommandBuilder()
+        new SlashCommandBuilder()
             .WithName("pronoun")
             .WithDescription("Set your pronoun role")
             .AddOption(new SlashCommandOptionBuilder()
@@ -31,14 +31,16 @@ internal class PronounCommand
                 .WithType(ApplicationCommandOptionType.String)
             )
             .Build()
-        };
+    };
 
     internal static async Task SlashCommandExecuted(SocketSlashCommand command)
     {
-        if (command.Data.Name != "pronoun" || command.User is not IGuildUser author || command.Channel is not SocketTextChannel channel)
+        if (command.Data.Name != "pronoun" || command.User is not IGuildUser author ||
+            command.Channel is not SocketTextChannel channel)
         {
             return;
         }
+
         var role = (string)command.Data.Options.First();
         ulong? idNull = role switch
         {

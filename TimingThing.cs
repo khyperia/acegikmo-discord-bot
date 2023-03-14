@@ -29,11 +29,14 @@ internal class TimingThing
 
     public async Task MessageReceivedAsync(SocketMessage message)
     {
-        if (DateTime.UtcNow > _nextUpdate && message.Channel is SocketTextChannel messageChannel && messageChannel.Guild.Id == ACEGIKMO_SERVER)
+        if (DateTime.UtcNow > _nextUpdate && message.Channel is SocketTextChannel messageChannel &&
+            messageChannel.Guild.Id == ACEGIKMO_SERVER)
         {
             await DoTimer(messageChannel);
         }
-        else if (message.Author.Id == ASHL && message.Content == "!dotimer" && message.Channel is SocketTextChannel messageChannel2 && messageChannel2.Guild.Id == ACEGIKMO_SERVER)
+        else if (message.Author.Id == ASHL &&
+                 message is { Content: "!dotimer", Channel: SocketTextChannel messageChannel2 } &&
+                 messageChannel2.Guild.Id == ACEGIKMO_SERVER)
         {
             await DoTimer(messageChannel2);
         }
@@ -42,7 +45,8 @@ internal class TimingThing
     private async Task DoTimer(SocketTextChannel messageChannel)
     {
         var lewdchannel = messageChannel.Guild.GetTextChannel(LEWD_CHANNEL);
-        await lewdchannel.SendMessageAsync("Please make sure you've read the topic of this channel, as this channel is \U0001F525*spicy*\U0001F525 and it's *important*.");
+        await lewdchannel.SendMessageAsync(
+            "Please make sure you've read the topic of this channel, as this channel is \U0001F525*spicy*\U0001F525 and it's *important*.");
         SetNextUpdate();
         var modchannel = messageChannel.Guild.GetTextChannel(ACEGIKMO_DELETED_MESSAGES);
         await MemberizerCommand.Memberizer(_log, modchannel, 50);
@@ -65,6 +69,7 @@ internal class TimingThing
                 Console.WriteLine($"{i++}/{others.Count}");
             }
         }
+
         await _tmpBan.Unban(messageChannel.Guild);
         Console.WriteLine($"Done");
     }
@@ -85,19 +90,21 @@ internal class TimingThing
                     {
                         yield return item.Id;
                     }
+
                     youngest = Math.Min(youngest, item.Id);
                 }
             }
+
             if (count != limit)
             {
                 Console.WriteLine($"Done yielding items in the first batch ({count} != {limit})");
                 yield break;
             }
         }
-        for (var i = 0; ; i++)
+        for (var i = 0;; i++)
         {
             var count = 0;
-            await foreach (var collection in channel.GetMessagesAsync(youngest, Discord.Direction.Before, limit))
+            await foreach (var collection in channel.GetMessagesAsync(youngest, Direction.Before, limit))
             {
                 foreach (var item in collection)
                 {
@@ -107,6 +114,7 @@ internal class TimingThing
                     youngest = Math.Min(youngest, item.Id);
                 }
             }
+
             if (count != limit)
             {
                 Console.WriteLine($"Done yielding items after {i + 1} iters ({count} != {limit})");
