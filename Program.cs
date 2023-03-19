@@ -66,7 +66,7 @@ internal class Program : IDisposable
             return Task.CompletedTask;
         };
         _client.MessageDeleted += new DeleteEcho(_log).MessageDeletedAsync;
-        _client.MessageReceived += EchoCommand.MessageReceivedAsync;
+        _client.SlashCommandExecuted += EchoCommand.SlashCommandExecuted;
         var games = new GamesCommand();
         _client.MessageReceived += games.MessageReceivedAsync;
         _client.SlashCommandExecuted += games.SlashCommandExecuted;
@@ -90,6 +90,7 @@ internal class Program : IDisposable
                 GamesCommand.Commands
                     .Concat(PronounCommand.Commands)
                     .Concat(TmpBan.Commands)
+                    .Concat(EchoCommand.Commands)
                     .ToArray()
             );
         };

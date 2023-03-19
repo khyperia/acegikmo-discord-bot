@@ -1,33 +1,58 @@
 using Discord;
 using Discord.WebSocket;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
-using static AcegikmoDiscordBot.Program;
 
 namespace AcegikmoDiscordBot;
 
 internal static class EchoCommand
 {
-    public static async Task MessageReceivedAsync(SocketMessage message)
+    public static readonly SlashCommandProperties[] Commands =
     {
-        if (message.Author.Id == ASHL && message.Content.StartsWith("!echo "))
-        {
-            var msg = message.Content["!echo ".Length..].Trim('`');
-            await message.Channel.SendMessageAsync(msg);
-        }
+        // cant do ApplicationCommandOptionType.Integer because it doesn't support 64 bit ints
+        new SlashCommandBuilder()
+            .WithName("snowflaketotime")
+            .WithDescription("Convert snowflake to time")
+            .AddOption("snowflake", ApplicationCommandOptionType.String, "The snowflake", isRequired: true)
+            .Build(),
+        new SlashCommandBuilder()
+            .WithName("timetosnowflake")
+            .AddOption("time", ApplicationCommandOptionType.String, "The time", isRequired: true)
+            .WithDescription("Convert a time to a snowflake")
+            .Build(),
+    };
 
-        if (message.Content.StartsWith("!snowflaketotime ") &&
-            ulong.TryParse(message.Content["!snowflaketotime ".Length..], out var snowflake))
+    internal static async Task SlashCommandExecuted(SocketSlashCommand command)
+    {
+        var options = command.Data.Options.ToArray();
+        switch (command.Data.Name)
         {
-            var time = SnowflakeUtils.FromSnowflake(snowflake);
-            await message.Channel.SendMessageAsync(time.DateTime.ToString("r"));
-        }
+            case "snowflaketotime":
+                try
+                {
+                    var snowflake = Convert.ToUInt64(options[0].Value);
+                    var time = SnowflakeUtils.FromSnowflake(snowflake);
+                    await command.RespondAsync(time.DateTime.ToString("r"));
+                }
+                catch
+                {
+                    await command.RespondAsync("Invalid number");
+                }
 
-        if (message.Content.StartsWith("!timetosnowflake ") &&
-            DateTime.TryParse(message.Content["!timetosnowflake ".Length..], out var thingyTime))
-        {
-            var theSnowflake = SnowflakeUtils.ToSnowflake(thingyTime);
-            await message.Channel.SendMessageAsync(theSnowflake.ToString());
+                break;
+            case "timetosnowflake":
+                if (DateTime.TryParse(Convert.ToString(options[0].Value), out var thingyTime))
+                {
+                    var theSnowflake = SnowflakeUtils.ToSnowflake(thingyTime);
+                    await command.RespondAsync(theSnowflake.ToString());
+                }
+                else
+                {
+                    await command.RespondAsync("Invalid date");
+                }
+
+                break;
         }
     }
 }
