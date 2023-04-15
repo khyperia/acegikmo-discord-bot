@@ -52,7 +52,8 @@ internal class Program : IDisposable
                 GatewayIntents.Guilds |
                 GatewayIntents.GuildMembers |
                 GatewayIntents.GuildMessages |
-                GatewayIntents.GuildMessageReactions,
+                GatewayIntents.GuildMessageReactions |
+                GatewayIntents.MessageContent,
         });
         _log = new();
         Console.CancelKeyPress += (sender, args) => Dispose();

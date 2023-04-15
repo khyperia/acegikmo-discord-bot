@@ -1,3 +1,4 @@
+using System;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -116,6 +117,11 @@ internal class GamesCommand
             .AddOption("game", ApplicationCommandOptionType.String, "The game to ping", isRequired: true)
             .Build(),
         new SlashCommandBuilder()
+            .WithName("listgame")
+            .WithDescription("List everyone registered to a game (like /pinggame, without pinging)")
+            .AddOption("game", ApplicationCommandOptionType.String, "The game to list", isRequired: true)
+            .Build(),
+        new SlashCommandBuilder()
             .WithName("games")
             .WithDescription("List all games")
             .Build(),
@@ -145,6 +151,12 @@ internal class GamesCommand
                 {
                     var game = (string)command.Data.Options.First().Value;
                     await PingGame(command, game.ToLower());
+                }
+                break;
+            case "listgame":
+                {
+                    var game = (string)command.Data.Options.First().Value;
+                    await ListGame(command, game.ToLower());
                 }
                 break;
             case "games":
@@ -237,6 +249,36 @@ internal class GamesCommand
         }
     }
 
+    private async Task ListGame(SocketSlashCommand command, string game)
+    {
+        var gameDict = GameDict(command);
+        if (gameDict == null)
+        {
+            return;
+        }
+
+        if (command.Channel is not SocketGuildChannel chan)
+        {
+            return;
+        }
+
+        if (!gameDict.TryGetValue(game, out var list))
+        {
+            await command.RespondAsync($"Nobody's in the list for {game.Replace("@", "@\u200B")}.");
+        }
+        else
+        {
+            await command.RespondAsync("", embeds: new[]
+            {
+                new EmbedBuilder
+                {
+                    Title = $"People registered to {game.Replace("@", "@\u200B")}",
+                    Description = $"{string.Join(", ", list.Select(MentionUtils.MentionUser))}",
+                }.Build()
+            });
+        }
+    }
+
     private async Task ListGames(SocketSlashCommand command)
     {
         var gameDict = GameDict(command);
@@ -321,14 +363,16 @@ internal class GamesCommand
             return;
         }
 
-        if (!TryParseId(cmd, out var id))
+        List<string>? emptyKeys = null;
+        foreach (var idStr in cmd.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
         {
-            await message.Channel.SendMessageAsync("bad user ID");
-        }
-        else
-        {
+            if (!TryParseId(idStr, out var id))
+            {
+                await message.Channel.SendMessageAsync($"bad user ID: {idStr}");
+                break;
+            }
+
             var changed = false;
-            List<string>? emptyKeys = null;
             foreach (var kvp in gameDict)
             {
                 changed |= kvp.Value.Remove(id);
@@ -341,22 +385,21 @@ internal class GamesCommand
 
             if (!changed)
             {
-                await message.Channel.SendMessageAsync("user not found");
-            }
-            else
-            {
-                if (emptyKeys != null)
-                {
-                    foreach (var emptyKey in emptyKeys)
-                    {
-                        gameDict.Remove(emptyKey);
-                    }
-                }
-
-                SaveDict();
-                await Checkmark(message);
+                await message.Channel.SendMessageAsync($"user not found: {idStr}");
+                break;
             }
         }
+
+        if (emptyKeys != null)
+        {
+            foreach (var emptyKey in emptyKeys)
+            {
+                gameDict.Remove(emptyKey);
+            }
+        }
+
+        SaveDict();
+        await Checkmark(message);
     }
 
     private async Task AddUserGame(SocketMessage message, string cmd)
