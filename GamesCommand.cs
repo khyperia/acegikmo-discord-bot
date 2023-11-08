@@ -257,11 +257,6 @@ internal class GamesCommand
             return;
         }
 
-        if (command.Channel is not SocketGuildChannel chan)
-        {
-            return;
-        }
-
         if (!gameDict.TryGetValue(game, out var list))
         {
             await command.RespondAsync($"Nobody's in the list for {game.Replace("@", "@\u200B")}.");
