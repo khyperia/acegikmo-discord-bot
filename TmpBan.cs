@@ -55,13 +55,26 @@ internal class TmpBan
         }
 
         var options = command.Data.Options.ToArray();
-        var bannee = (SocketGuildUser)options[0].Value;
+        var option0Value = options[0].Value;
+        if (option0Value is not SocketGuildUser bannee)
+        {
+            if (option0Value == null)
+                await command.RespondAsync("Bannee null (couldn't fetch user or something?)", ephemeral: true);
+            else
+                await command.RespondAsync(
+                    $"Bannee user object is a {option0Value.GetType().Name}, not a {nameof(SocketGuildUser)}, perhaps they're already banned?",
+                    ephemeral: true);
+
+            return;
+        }
 
         if (bannee.Roles.Any(role => role.Id == MODERATOR_ROLE))
         {
             await command.RespondAsync("look, kid, don't try to mutiny here pls");
             return;
         }
+
+        await command.RespondAsync("Please wait, processing command...", ephemeral: true);
 
         var days = Convert.ToInt64(options[1].Value);
         var reason = options.Length >= 3 ? (string?)options[2].Value : null;
@@ -70,8 +83,9 @@ internal class TmpBan
         if (BanData.Data.TryGetValue(bannee.Id, out var existingTimeInt))
         {
             var existingTime = DateTimeOffset.FromUnixTimeSeconds(existingTimeInt);
+            var sssss = days == 1 ? "" : "s";
             message =
-                $"{bannee.Mention} was already banned until {existingTime}, but that has been updated to {newTime} ({days} day(sSs)). Reason (i guess won't be sent to user): {reason}";
+                $"{bannee.Mention} was already banned until {existingTime}, but that has been updated to {newTime} ({days} day{sssss}). Reason (won't be sent to user): {reason}";
         }
         else
         {
@@ -83,9 +97,9 @@ internal class TmpBan
 
         await bannee.BanAsync(0, "temp banned by slash command");
 
-        await command.RespondAsync(message);
+        await command.ModifyOriginalResponseAsync(m => m.Content = message);
         var modchannel = await channel.Guild.GetTextChannelAsync(ACEGIKMO_MOD_LOUNGE);
-        await modchannel.SendMessageAsync(message + $" by {command.User.Mention}");
+        await modchannel.SendMessageAsync($"Tmpban mod action by {command.User.Mention} --- {message}");
         BanData.Data[bannee.Id] = newTime.ToUnixTimeSeconds();
         BanData.Save();
     }
