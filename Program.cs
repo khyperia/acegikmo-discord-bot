@@ -21,11 +21,11 @@ internal class ConfigClass
 
 internal class Program : IDisposable
 {
-    public static ulong ASHL = 139525105846976512UL;
-    public static ulong MODERATOR_ROLE = 474015848311291944UL;
-    public static ulong ACEGIKMO_SERVER = 422202998610198528UL;
-    public static ulong ACEGIKMO_DELETED_MESSAGES = 612767753031647240UL;
-    public static ulong ACEGIKMO_MOD_LOUNGE = 474020456903737350UL;
+    public const ulong ASHL = 139525105846976512UL;
+    public const ulong MODERATOR_ROLE = 474015848311291944UL;
+    public const ulong ACEGIKMO_SERVER = 422202998610198528UL;
+    public const ulong ACEGIKMO_DELETED_MESSAGES = 612767753031647240UL;
+    public const ulong ACEGIKMO_MOD_LOUNGE = 474020456903737350UL;
 
     private readonly Log _log;
     public static readonly ConfigClass Config = GetConfig();

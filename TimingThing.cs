@@ -29,14 +29,11 @@ internal class TimingThing
 
     public async Task MessageReceivedAsync(SocketMessage message)
     {
-        if (DateTime.UtcNow > _nextUpdate && message.Channel is SocketTextChannel messageChannel &&
-            messageChannel.Guild.Id == ACEGIKMO_SERVER)
+        if (DateTime.UtcNow > _nextUpdate && message.Channel is SocketTextChannel { Guild.Id: ACEGIKMO_SERVER } messageChannel)
         {
             await DoTimer(messageChannel);
         }
-        else if (message.Author.Id == ASHL &&
-                 message is { Content: "!dotimer", Channel: SocketTextChannel messageChannel2 } &&
-                 messageChannel2.Guild.Id == ACEGIKMO_SERVER)
+        else if (message is { Author.Id: ASHL, Content: "!dotimer", Channel: SocketTextChannel { Guild.Id: ACEGIKMO_SERVER } messageChannel2 })
         {
             await DoTimer(messageChannel2);
         }
