@@ -74,7 +74,7 @@ internal class TmpBan
             return;
         }
 
-        await command.RespondAsync("Please wait, processing command...", ephemeral: true);
+        await command.RespondAsync("Please wait, processing command...");
 
         var days = Convert.ToInt64(options[1].Value);
         var reason = options.Length >= 3 ? (string?)options[2].Value : null;
